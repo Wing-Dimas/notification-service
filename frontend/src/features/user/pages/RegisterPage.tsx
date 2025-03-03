@@ -1,41 +1,45 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import InputText from "../../../components/input/InputText";
 import LoadingIntro from "../components/LoadingIntro";
-// import ErrorText from  '../../components/Typography/ErrorText'
+import { useForm } from "react-hook-form";
+import { registerFormSchema, RegisterFormSchema } from "../form/register";
+import { zodResolver } from "@hookform/resolvers/zod";
+import useRegister from "../hooks/useRegister";
+import { useAuthContext } from "../../../contexts/AuthContext";
+import ErrorText from "../../../components/input/ErrorText";
 
 const RegisterPage = () => {
-  const INITIAL_REGISTER_OBJ = {
-    name: "",
-    password: "",
-    emailId: "",
-  };
+  const { loading, register: onRegister } = useRegister();
+  const { authUser } = useAuthContext();
+  const navigate = useNavigate();
 
-  const [loading, setLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
-  const [registerObj, setRegisterObj] = useState(INITIAL_REGISTER_OBJ);
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState,
+    formState: { errors },
+  } = useForm<RegisterFormSchema>({
+    resolver: zodResolver(registerFormSchema),
+    defaultValues: {
+      username: "",
+      email: "",
+      password: "",
+    },
+  });
 
-  const submitForm = (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrorMessage("");
-
-    if (registerObj.name.trim() === "") return setErrorMessage("Name is required! (use any value)");
-    if (registerObj.emailId.trim() === "") return setErrorMessage("Email Id is required! (use any value)");
-    if (registerObj.password.trim() === "") return setErrorMessage("Password is required! (use any value)");
-    else {
-      setLoading(true);
-      // Call API to check user credentials and save token in localstorage
-      localStorage.setItem("token", "DumyTokenHere");
-      setLoading(false);
-      window.location.href = "/app/welcome";
+  useEffect(() => {
+    if (authUser) {
+      navigate("/dashboard");
     }
-  };
+  }, [authUser, navigate]);
 
-  const updateFormValue = ({ updateType, value }: { updateType: string; value: string }) => {
-    console.log(errorMessage);
-    setErrorMessage("");
-    setRegisterObj({ ...registerObj, [updateType]: value });
-  };
+  useEffect(() => {
+    if (formState.isSubmitSuccessful) {
+      reset({ username: "", email: "", password: "" });
+    }
+  }, [formState, reset]);
 
   return (
     <div className="min-h-screen bg-base-200 flex items-center">
@@ -46,37 +50,22 @@ const RegisterPage = () => {
           </div>
           <div className="py-24 px-10">
             <h2 className="text-2xl font-semibold mb-2 text-center">Register</h2>
-            <form onSubmit={(e) => submitForm(e)}>
+            <form onSubmit={handleSubmit((data) => onRegister(data))}>
               <div className="mb-4">
-                <InputText
-                  defaultValue={registerObj.name}
-                  updateType="name"
-                  containerStyle="mt-4"
-                  labelTitle="Name"
-                  updateFormValue={updateFormValue}
-                />
+                <InputText containerStyle="mt-4" labelTitle="Username" {...register("username")} />
+                {!!errors.username?.message && <ErrorText className="mt-2">{errors.username?.message}</ErrorText>}
 
-                <InputText
-                  defaultValue={registerObj.emailId}
-                  updateType="emailId"
-                  containerStyle="mt-4"
-                  labelTitle="Email Id"
-                  updateFormValue={updateFormValue}
-                />
+                <InputText containerStyle="mt-4" labelTitle="Email" {...register("email")} />
+                {!!errors.email?.message && <ErrorText className="mt-2">{errors.email?.message}</ErrorText>}
 
-                <InputText
-                  defaultValue={registerObj.password}
-                  type="password"
-                  updateType="password"
-                  containerStyle="mt-4"
-                  labelTitle="Password"
-                  updateFormValue={updateFormValue}
-                />
+                <InputText type="password" containerStyle="mt-4" labelTitle="Password" {...register("password")} />
+                {!!errors.password?.message && <ErrorText className="mt-2">{errors.password?.message}</ErrorText>}
               </div>
 
               {/* <ErrorText styleClass="mt-8">{errorMessage}</ErrorText> */}
-              <button type="submit" className={"btn mt-2 w-full btn-primary" + (loading ? " loading" : "")}>
+              <button type="submit" className={`btn mt-2 w-full btn-primary`} disabled={loading}>
                 Register
+                {loading && <span className="loading loading-spinner loading-xs"></span>}
               </button>
 
               <div className="text-center mt-4">

@@ -80,8 +80,9 @@ const LoginPage: React.FC = () => {
                 </Link>
               </div>
 
-              <button type="submit" className={"btn mt-2 w-full btn-primary" + (loading ? " loading" : "")}>
+              <button type="submit" className={"btn mt-2 w-full btn-primary"} disabled={loading}>
                 Login
+                {loading && <span className="loading loading-spinner loading-xs"></span>}
               </button>
 
               <div className="text-center mt-4">

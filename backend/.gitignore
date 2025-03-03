@@ -132,6 +132,7 @@ dist
 # session
 session_auth_info
 session
+session/store/*.json
 
 # upluoder
 uploads

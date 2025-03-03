@@ -38,7 +38,7 @@ export default class ListenMessageFromAMQP {
   public async handler() {
     const session = new ConnectionSession().getClient();
 
-    if (!session?.user?.id) return;
+    if (!session?.user?.id || session?.isStop) return;
 
     const { connection, channel } = await getAMQPConnection(
       this.virtualHostName,

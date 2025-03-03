@@ -9,30 +9,15 @@ const Dashboard: React.FC = () => {
           {/* Stats cards */}
           <div className="stats shadow">
             <div className="stat">
-              <div className="stat-title">Total Users</div>
-              <div className="stat-value">31K</div>
-              <div className="stat-desc">Jan 1st - Feb 1st</div>
+              <div className="stat-title">Total Message</div>
+              <div className="stat-value">100K</div>
+              <div className="stat-desc">Current</div>
             </div>
           </div>
           <div className="stats shadow">
             <div className="stat">
-              <div className="stat-title">Revenue</div>
-              <div className="stat-value">$45,600</div>
-              <div className="stat-desc">↗︎ 400 (22%)</div>
-            </div>
-          </div>
-          <div className="stats shadow">
-            <div className="stat">
-              <div className="stat-title">Active Projects</div>
-              <div className="stat-value">42</div>
-              <div className="stat-desc">↘︎ 90 (14%)</div>
-            </div>
-          </div>
-          <div className="stats shadow">
-            <div className="stat">
-              <div className="stat-title">Satisfaction</div>
-              <div className="stat-value">95%</div>
-              <div className="stat-desc">↗︎ 2%</div>
+              <div className="stat-title">Status</div>
+              <div className="stat-value">ON</div>
             </div>
           </div>
         </div>
@@ -44,7 +29,8 @@ const Dashboard: React.FC = () => {
             <table className="table">
               <thead>
                 <tr>
-                  <th>Name</th>
+                  <th>Message</th>
+                  <th>Type</th>
                   <th>Status</th>
                   <th>Date</th>
                   <th>Action</th>
@@ -52,9 +38,10 @@ const Dashboard: React.FC = () => {
               </thead>
               <tbody>
                 <tr>
-                  <td>Project Alpha</td>
+                  <td>Any Question?</td>
+                  <td>document</td>
                   <td>
-                    <div className="badge badge-success">Completed</div>
+                    <div className="badge badge-success">Success</div>
                   </td>
                   <td>Jan 23, 2024</td>
                   <td>
@@ -62,111 +49,12 @@ const Dashboard: React.FC = () => {
                   </td>
                 </tr>
                 <tr>
-                  <td>Project Beta</td>
+                  <td>Any Question?</td>
+                  <td>document</td>
                   <td>
-                    <div className="badge badge-warning">In Progress</div>
+                    <div className="badge badge-error">Failed</div>
                   </td>
-                  <td>Jan 22, 2024</td>
-                  <td>
-                    <button className="btn btn-xs">View</button>
-                  </td>
-                </tr>
-                <tr>
-                  <td>Project Gamma</td>
-                  <td>
-                    <div className="badge badge-error">Delayed</div>
-                  </td>
-                  <td>Jan 21, 2024</td>
-                  <td>
-                    <button className="btn btn-xs">View</button>
-                  </td>
-                </tr>
-                <tr>
-                  <td>Project Gamma</td>
-                  <td>
-                    <div className="badge badge-error">Delayed</div>
-                  </td>
-                  <td>Jan 21, 2024</td>
-                  <td>
-                    <button className="btn btn-xs">View</button>
-                  </td>
-                </tr>
-                <tr>
-                  <td>Project Gamma</td>
-                  <td>
-                    <div className="badge badge-error">Delayed</div>
-                  </td>
-                  <td>Jan 21, 2024</td>
-                  <td>
-                    <button className="btn btn-xs">View</button>
-                  </td>
-                </tr>
-                <tr>
-                  <td>Project Gamma</td>
-                  <td>
-                    <div className="badge badge-error">Delayed</div>
-                  </td>
-                  <td>Jan 21, 2024</td>
-                  <td>
-                    <button className="btn btn-xs">View</button>
-                  </td>
-                </tr>
-                <tr>
-                  <td>Project Gamma</td>
-                  <td>
-                    <div className="badge badge-error">Delayed</div>
-                  </td>
-                  <td>Jan 21, 2024</td>
-                  <td>
-                    <button className="btn btn-xs">View</button>
-                  </td>
-                </tr>
-                <tr>
-                  <td>Project Gamma</td>
-                  <td>
-                    <div className="badge badge-error">Delayed</div>
-                  </td>
-                  <td>Jan 21, 2024</td>
-                  <td>
-                    <button className="btn btn-xs">View</button>
-                  </td>
-                </tr>
-                <tr>
-                  <td>Project Gamma</td>
-                  <td>
-                    <div className="badge badge-error">Delayed</div>
-                  </td>
-                  <td>Jan 21, 2024</td>
-                  <td>
-                    <button className="btn btn-xs">View</button>
-                  </td>
-                </tr>
-                <tr>
-                  <td>Project Gamma</td>
-                  <td>
-                    <div className="badge badge-error">Delayed</div>
-                  </td>
-                  <td>Jan 21, 2024</td>
-                  <td>
-                    <button className="btn btn-xs">View</button>
-                  </td>
-                </tr>
-                <tr>
-                  <td>Project Gamma</td>
-                  <td>
-                    <div className="badge badge-error">Delayed</div>
-                  </td>
-                  <td>Jan 21, 2024</td>
-                  <td>
-                    <button className="btn btn-xs">View</button>
-                  </td>
-                </tr>
-                <tr>
-                  <td>Project Gamma</td>
-                  <td>
-                    <div className="badge badge-error">Delayed</div>
-                  </td>
-                  <td>Jan 21, 2024</td>
+                  <td>Jan 23, 2024</td>
                   <td>
                     <button className="btn btn-xs">View</button>
                   </td>

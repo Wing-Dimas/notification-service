@@ -24,6 +24,7 @@ type SessionType = {
 } & ReturnType<typeof makeWASocket>;
 
 let sessions: SessionType | null;
+sessions = { ...sessions, isStop: true };
 
 class ConnectionSession extends SessionDB {
   public readonly sessionPath: string;
@@ -115,6 +116,7 @@ class ConnectionSession extends SessionDB {
           result: "No Response, QR Scan Canceled",
         });
         console.log(`Count : ${this.count}, QR Stopped!`);
+        client.ws.close();
         client.logout();
         client.ev.removeAllListeners("connection.update");
         return;

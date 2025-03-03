@@ -19,6 +19,14 @@ class SessionService extends ConnectionSession {
       throw new HttpException(500, `Internal Server Error: ${error.message}`);
     }
   }
+
+  public async startSession(): Promise<void> {
+    try {
+      await this.createSession(SESSION_NAME);
+    } catch (error) {
+      throw new HttpException(500, `Internal Server Error: ${error.message}`);
+    }
+  }
 }
 
 export default SessionService;
