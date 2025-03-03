@@ -12,4 +12,6 @@ export const {
   ORIGIN,
   SESSION_NAME,
   SESSION_PATH,
+  LOG_PATH_WHATSAPP,
+  AMQP_URL,
 } = process.env;

@@ -3,10 +3,8 @@ import { User } from "@prisma/client";
 import { CreateUserDto, LoginUserDto } from "@dtos/users.dto";
 import { RequestWithUser } from "@interfaces/auth.interface";
 import AuthService from "@services/auth.service";
-import { email } from "envalid";
 import UserService from "@/services/users.service";
 import { HttpException } from "@/exceptions/HttpException";
-import { stat } from "fs";
 
 class AuthController {
   public authService = new AuthService();
@@ -58,7 +56,7 @@ class AuthController {
           id: findUser.id,
           username: findUser.username,
           email: findUser.email,
-          accessToken: accessToken.token,
+          access_token: accessToken.token,
         },
       });
     } catch (error) {
@@ -77,6 +75,28 @@ class AuthController {
 
       res.setHeader("Set-Cookie", ["Authorization=; Max-age=0"]);
       res.status(200).json({ status: 200, message: "logout" });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public getNewToken = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
+    try {
+      console.log(req);
+      console.log(req.cookies["Authorization"]);
+      const refreshToken = req.cookies["Authorization"];
+      const newAccessToken = await this.authService.getNewToken(refreshToken);
+      res.status(200).json({
+        message: "new access token",
+        status: 200,
+        data: {
+          access_token: newAccessToken.token,
+        },
+      });
     } catch (error) {
       next(error);
     }

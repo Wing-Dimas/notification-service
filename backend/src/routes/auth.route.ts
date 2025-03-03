@@ -15,20 +15,28 @@ class AuthRoute implements Routes {
   }
 
   private initializeRoutes() {
+    // SIGNUP
     this.router.post(
       `${this.path}signup`,
       validationMiddleware(CreateUserDto, "body"),
       this.authController.signUp,
     );
+    // LOGIN
     this.router.post(
       `${this.path}login`,
       validationMiddleware(LoginUserDto, "body"),
       this.authController.logIn,
     );
+    // LOGOUT
     this.router.post(
       `${this.path}logout`,
       authMiddleware,
       this.authController.logOut,
+    );
+    // GENERATE TOKEN
+    this.router.post(
+      `${this.path}refresh-token`,
+      this.authController.getNewToken,
     );
   }
 }

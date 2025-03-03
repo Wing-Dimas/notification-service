@@ -3,6 +3,7 @@ import { SendMessageDto } from "@dtos/message.dto";
 import { Routes } from "@interfaces/routes.interface";
 import MessageController from "@/controllers/message.controller";
 import validationMiddleware from "@/middlewares/validation.middleware";
+import authMiddleware from "@/middlewares/auth.middleware";
 
 class MessageRoute implements Routes {
   public path = "/";
@@ -17,6 +18,7 @@ class MessageRoute implements Routes {
     this.router.post(
       `${this.path}send-message`,
       validationMiddleware(SendMessageDto, "body"),
+      authMiddleware,
       this.messageController.sendMessage,
     );
   }

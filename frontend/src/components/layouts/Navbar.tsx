@@ -1,14 +1,15 @@
 import React, { useEffect, useState } from "react";
 import { Notification } from "../../types/notificatin";
 import { Link } from "react-router-dom";
+import useLogout from "../../features/user/hooks/useLogout";
 
 const Navbar: React.FC = () => {
+  const { logout } = useLogout();
   const [theme, setTheme] = useState<string | null>(
     localStorage.getItem("theme") ? localStorage.getItem("theme") : "light"
   );
 
   const toggleTheme = (e: React.ChangeEvent<HTMLInputElement>) => {
-    console.log("test");
     if (e.target.checked) {
       setTheme("dark");
     } else {
@@ -116,7 +117,7 @@ const Navbar: React.FC = () => {
               className="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52"
             >
               <li>
-                <Link to="/">Logout</Link>
+                <button onClick={logout}>Logout</button>
               </li>
             </ul>
           </div>

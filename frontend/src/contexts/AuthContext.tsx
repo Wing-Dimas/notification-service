@@ -19,9 +19,7 @@ interface AuthContextProviderProps {
 }
 
 export const AuthContextProvider = ({ children }: AuthContextProviderProps) => {
-  const [authUser, setAuthUser] = useState<User | null>(
-    JSON.parse(localStorage?.getItem("notification-user") as string) || "null"
-  );
+  const [authUser, setAuthUser] = useState<User | null>(JSON.parse(localStorage?.getItem("user") as string) || null);
 
   return <AuthContext.Provider value={{ authUser, setAuthUser }}>{children}</AuthContext.Provider>;
 };

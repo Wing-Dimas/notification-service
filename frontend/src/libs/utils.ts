@@ -9,3 +9,7 @@ export function cn(...inputs: ClassValue[]) {
 export function randomKey() {
   return nanoid(10);
 }
+
+export async function delay(ms: number = 3000) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}

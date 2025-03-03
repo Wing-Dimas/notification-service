@@ -5,7 +5,6 @@ import makeWASocket, {
 } from "@whiskeysockets/baileys";
 import { Boom } from "@hapi/boom";
 import { NODE_ENV } from "@/config";
-import { logger } from "@/utils/logger";
 
 export let sock: ReturnType<typeof makeWASocket>;
 export let qrDinamic: string;

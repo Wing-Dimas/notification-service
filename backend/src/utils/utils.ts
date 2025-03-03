@@ -1,4 +1,16 @@
-import chalk from "chalk";
+import { AMQP_URL } from "@/config";
+import { connect } from "amqplib";
+
+export const getAMQPConnection = async (virtualHost: string) => {
+  try {
+    const connection = await connect(AMQP_URL + virtualHost);
+    const channel = await connection.createChannel();
+
+    return { connection, channel };
+  } catch (error) {
+    throw new Error(error);
+  }
+};
 
 /**
  * @method isEmpty
@@ -30,8 +42,8 @@ export const sleep = async (ms: number) => {
 
 export const color = (text: string, color: string) => {
   return !color
-    ? chalk.green(text)
+    ? text
     : color.startsWith("#")
-    ? chalk.hex(color)(text)
-    : chalk.keyword(color)(text);
+    ? console.log(text)
+    : console.log(text);
 };

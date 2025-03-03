@@ -5,12 +5,15 @@ import helmet from "helmet";
 import morgan from "morgan";
 import swaggerJSDoc from "swagger-jsdoc";
 import swaggerUi from "swagger-ui-express";
-import { NODE_ENV, PORT, LOG_FORMAT } from "@config";
+import { NODE_ENV, PORT, LOG_FORMAT, SESSION_NAME } from "@config";
 import { Routes } from "@interfaces/routes.interface";
 import errorMiddleware from "@middlewares/error.middleware";
 import { logger, stream } from "@utils/logger";
 import { app, server } from "@/libs/socket";
-import { connectToWhatsApp } from "./libs/whatsapp";
+// import { connectToWhatsApp } from "./libs/whatsapp";
+import ConnectionSession from "./libs/whatsapp/ConnectionSession";
+import { db } from "./libs/db";
+import Schedule from "./jobs";
 
 class App {
   public app: express.Application;
@@ -27,10 +30,11 @@ class App {
     this.initializeRoutes(routes);
     this.initializeSwagger();
     this.initializeErrorHandling();
+    this.initializeScheduler();
   }
 
   public listen() {
-    server.listen(this.port, () => {
+    server.listen(this.port, async () => {
       logger.info(`=================================`);
       logger.info(`======= ENV: ${this.env} =======`);
       logger.info(`🚀 App listening on the port ${this.port}`);
@@ -44,7 +48,12 @@ class App {
 
   private initializeMiddlewares() {
     this.app.use(morgan(LOG_FORMAT, { stream }));
-    this.app.use(cors());
+    this.app.use(
+      cors({
+        origin: "*",
+        credentials: true,
+      }),
+    );
     this.app.use(helmet());
     this.app.use(express.json());
     this.app.use(express.urlencoded({ extended: true }));
@@ -77,8 +86,17 @@ class App {
     this.app.use(errorMiddleware);
   }
 
-  private initializeWhatsapp() {
-    connectToWhatsApp();
+  private async initializeWhatsapp() {
+    // connectToWhatsApp();
+    const sessionExist = await db.session.findFirst({ take: 1 });
+    if (sessionExist) {
+      new ConnectionSession().createSession(SESSION_NAME);
+    }
+  }
+
+  private initializeScheduler() {
+    // TODO: implement scheduler
+    Schedule.run();
   }
 }
 

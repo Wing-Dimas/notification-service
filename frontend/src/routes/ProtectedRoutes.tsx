@@ -12,9 +12,9 @@ export type Props = {
 const ProtectedRoute = ({ needAuthentication, component: Component }: Props) => {
   const { authUser } = useAuthContext();
 
-  // const accessToken = authUser?.accessToken ?? null;
+  const accessToken = authUser?.access_token ?? null;
 
-  // if (!accessToken) return <Navigate to="/" />;
+  if (!accessToken) return <Navigate to="/" />;
 
   // if (needAuthentication && parseJwt(accessToken).isExpired)
   //     return <Navigate to="/" />;

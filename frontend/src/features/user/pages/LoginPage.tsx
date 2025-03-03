@@ -1,38 +1,45 @@
-import React, { useState } from "react";
+import React, { useEffect } from "react";
 import LoadingIntro from "../components/LoadingIntro";
 import InputText from "../../../components/input/InputText";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+
+import { useForm } from "react-hook-form";
+import { loginFormSchema, type LoginFormSchema } from "../form/login";
+import { zodResolver } from "@hookform/resolvers/zod";
+import useLogin from "../hooks/useLogin";
+import ErrorText from "../../../components/input/ErrorText";
+import { useAuthContext } from "../../../contexts/AuthContext";
 
 const LoginPage: React.FC = () => {
-  const INITIAL_LOGIN_OBJ = {
-    password: "",
-    emailId: "",
-  };
+  const { loading, login } = useLogin();
+  const { authUser } = useAuthContext();
+  const navigate = useNavigate();
 
-  const [loading, setLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
-  const [loginObj, setLoginObj] = useState(INITIAL_LOGIN_OBJ);
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState,
+    formState: { errors },
+  } = useForm<LoginFormSchema>({
+    resolver: zodResolver(loginFormSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
 
-  const submitForm = (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrorMessage("");
-
-    if (loginObj.emailId.trim() === "") return setErrorMessage("Email Id is required! (use any value)");
-    if (loginObj.password.trim() === "") return setErrorMessage("Password is required! (use any value)");
-    else {
-      setLoading(true);
-      // Call API to check user credentials and save token in localstorage
-      localStorage.setItem("token", "DumyTokenHere");
-      setLoading(false);
-      window.location.href = "/app/welcome";
+  useEffect(() => {
+    if (authUser) {
+      navigate("/dashboard");
     }
-  };
+  }, [authUser, navigate]);
 
-  const updateFormValue = ({ updateType, value }: { updateType: string; value: string }) => {
-    console.log(errorMessage);
-    setErrorMessage("");
-    setLoginObj({ ...loginObj, [updateType]: value });
-  };
+  useEffect(() => {
+    if (formState.isSubmitSuccessful) {
+      reset({ password: "" });
+    }
+  }, [formState, reset]);
 
   return (
     <div className="min-h-screen bg-base-200 flex items-center">
@@ -44,25 +51,25 @@ const LoginPage: React.FC = () => {
           <div className="py-24 px-10">
             <h1 className="text-3xl text-center font-bold sm:hidden block">Notification Services</h1>
             <h2 className="text-2xl font-semibold mb-2 text-center">Login</h2>
-            <form onSubmit={(e) => submitForm(e)}>
+            <form onSubmit={handleSubmit((data) => login(data))}>
               <div className="mb-4">
                 <InputText
-                  type="emailId"
-                  defaultValue={loginObj.emailId}
-                  updateType="emailId"
+                  type="email"
+                  //   updateType="emailId"
                   containerStyle="mt-4"
                   labelTitle="Email Id"
-                  updateFormValue={updateFormValue}
+                  {...register("email")}
                 />
+                {!!errors.email?.message && <ErrorText className="mt-2">{errors.email?.message}</ErrorText>}
 
                 <InputText
-                  defaultValue={loginObj.password}
                   type="password"
-                  updateType="password"
+                  //   updateType="password"
                   containerStyle="mt-4"
                   labelTitle="Password"
-                  updateFormValue={updateFormValue}
+                  {...register("password")}
                 />
+                {!!errors.password?.message && <ErrorText className="mt-2">{errors.password?.message}</ErrorText>}
               </div>
 
               <div className="text-right text-primary">

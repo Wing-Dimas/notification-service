@@ -14,11 +14,15 @@ const authMiddleware = async (
   next: NextFunction,
 ) => {
   try {
-    const Authorization =
-      req.cookies["Authorization"] ||
-      (req.header("Authorization")
-        ? req.header("Authorization").split("Bearer ")[1]
-        : null);
+    // const Authorization =
+    //   req.cookies["Authorization"] ||
+    //   (req.header("Authorization")
+    //     ? req.header("Authorization").split("Bearer ")[1]
+    //     : null);
+
+    const Authorization = req.header("Authorization")
+      ? req.header("Authorization").split(" ")[1]
+      : null;
 
     if (Authorization) {
       const secretKey: string = JWT_ACCESS_TOKEN_SECRET;

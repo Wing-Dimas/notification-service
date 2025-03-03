@@ -54,7 +54,7 @@ const createJWTRefreshToken = (user: User): TokenData => {
  * @param  {string} token to be validated
  * @returns {object} return if jwt is valid or not
  */
-const validateJWTToken = (token: string) => {
+const validateJWTAccessToken = (token: string) => {
   try {
     const decodedToken = jwt.verify(token, JWT_ACCESS_TOKEN_SECRET);
 
@@ -66,4 +66,26 @@ const validateJWTToken = (token: string) => {
   }
 };
 
-export { createJWTAccessToken, createJWTRefreshToken, validateJWTToken };
+/**
+ * Validate JWT Token
+ * @param  {string} token to be validated
+ * @returns {object} return if jwt is valid or not
+ */
+const validateJWTRefreshToken = (token: string) => {
+  try {
+    const decodedToken = jwt.verify(token, JWT_REFRESH_TOKEN_SECRET);
+
+    const result = decodedToken;
+
+    return result;
+  } catch (error) {
+    throw new Error("token is not valid");
+  }
+};
+
+export {
+  createJWTAccessToken,
+  createJWTRefreshToken,
+  validateJWTAccessToken,
+  validateJWTRefreshToken,
+};

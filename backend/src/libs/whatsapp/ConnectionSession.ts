@@ -4,33 +4,36 @@ import {
   fetchLatestBaileysVersion,
   makeInMemoryStore,
   makeWASocket,
+  proto,
   useMultiFileAuthState,
   UserFacingSocketConfig,
 } from "@whiskeysockets/baileys";
 import { Boom } from "@hapi/boom";
-import pino from "pino";
 import qrcode from "qrcode";
 import fs from "fs";
-// import { modules } from "../../lib/index.js";
-// import { socket, moment } from "../config/index.js";
-// import Message from "./Client/handler/Message.js";
-import { SESSION_PATH } from "@/config/index.js";
+
+import { SESSION_PATH } from "@/config";
 import { color, sleep } from "@/utils/utils";
 import { socket } from "@libs/socket";
+import SessionDB from "./SessionDB";
+import { logDir, logger } from "./logger";
+import { join } from "path";
 
 type SessionType = {
   isStop: boolean;
 } & ReturnType<typeof makeWASocket>;
 
-let sessions: SessionType | null = null;
+let sessions: SessionType | null;
 
-class ConnectionSession {
-  private readonly sessionPath: string;
-  private readonly logPath: string;
-  private count: number;
+class ConnectionSession extends SessionDB {
+  public readonly sessionPath: string;
+  public readonly logPath: string;
+  public count: number;
+
   constructor() {
+    super();
     this.sessionPath = SESSION_PATH;
-    // this.logPath = LOG_PATH;
+    this.logPath = logDir;
     this.count = 0;
   }
 
@@ -38,7 +41,7 @@ class ConnectionSession {
     return sessions ?? null;
   }
 
-  async deleteSession(session_name: string) {
+  public async deleteSession(session_name: string) {
     if (fs.existsSync(`${this.sessionPath}/${session_name}`))
       fs.rmSync(`${this.sessionPath}/${session_name}`, {
         force: true,
@@ -48,11 +51,12 @@ class ConnectionSession {
       fs.unlinkSync(`${this.sessionPath}/store/${session_name}.json`);
     if (fs.existsSync(`${this.logPath}/${session_name}.txt`))
       fs.unlinkSync(`${this.logPath}/${session_name}.txt`);
-    // await this.deleteSessionDB(session_name);
+    await this.deleteSessionDB(session_name);
+    socket.emit("update-qr", { buffer: null, session_name });
     sessions = null;
   }
 
-  async generateQr(input, session_name) {
+  public async generateQr(input: string, session_name: string) {
     const rawData = await qrcode.toDataURL(input, { scale: 8 });
     const dataBase64 = rawData.replace(/^data:image\/png;base64,/, "");
     await sleep(3000);
@@ -68,7 +72,7 @@ class ConnectionSession {
     console.log(this.count);
   }
 
-  async createSession(session_name: string) {
+  public async createSession(session_name: string) {
     const sessionDir = `${this.sessionPath}/${session_name}`;
     const storePath = `${this.sessionPath}/store/${session_name}.json`;
     const { state, saveCreds } = await useMultiFileAuthState(sessionDir);
@@ -77,8 +81,8 @@ class ConnectionSession {
     const options: UserFacingSocketConfig = {
       printQRInTerminal: false,
       auth: state,
-      logger: pino({ level: "silent" }),
-      browser: Browsers.macOS("Safari"),
+      logger: logger,
+      browser: Browsers.windows("Chrome"),
       version,
     };
 
@@ -87,6 +91,11 @@ class ConnectionSession {
 
     const client = makeWASocket(options);
 
+    if (!fs.existsSync(`${this.sessionPath}/store`)) {
+      fs.mkdirSync(`${this.sessionPath}/store`, { recursive: true });
+      console.log("Folder berhasil dibuat!");
+    }
+
     store.readFromFile(storePath);
     setInterval(() => {
       store.writeToFile(storePath);
@@ -94,7 +103,10 @@ class ConnectionSession {
     store.bind(client.ev);
     sessions = { ...client, isStop: false };
 
+    // When Succeefuly update creds
     client.ev.on("creds.update", saveCreds);
+
+    // If Create Connection
     client.ev.on("connection.update", async update => {
       if (this.count >= 3) {
         this.deleteSession(session_name);
@@ -103,6 +115,7 @@ class ConnectionSession {
           result: "No Response, QR Scan Canceled",
         });
         console.log(`Count : ${this.count}, QR Stopped!`);
+        client.logout();
         client.ev.removeAllListeners("connection.update");
         return;
       }
@@ -110,13 +123,12 @@ class ConnectionSession {
       if (update.qr) this.generateQr(update.qr, session_name);
 
       if (update.isNewLogin) {
-        // await this.createSessionDB(
-        //   session_name,
-        //   client.authState.creds.me.id.split(":")[0],
-        // );
+        await this.createSessionDB(
+          session_name,
+          client.authState.creds.me.id.split(":")[0],
+        );
 
-        client.authState.creds.me.id.split(":")[0];
-        const files = `${this.logPath}/${session_name}.txt`;
+        const files = join(this.logPath, `${session_name}.txt`);
         if (!fs.existsSync(files)) {
           fs.writeFileSync(
             files,
@@ -146,7 +158,7 @@ class ConnectionSession {
               "#E6B0AA",
             ),
           );
-          this.deleteSession(session_name);
+          await this.deleteSession(session_name);
           client.logout();
           return socket.emit("connection-status", {
             session_name,
@@ -164,7 +176,7 @@ class ConnectionSession {
             );
             this.createSession(session_name);
           } else if (checked.isStop == true) {
-            // await this.updateStatusSessionDB(session_name, "STOPPED");
+            await this.updateStatusSessionDB(session_name, "STOPPED");
             console.log(
               color("[SYS]", "#EB6112"),
               color(
@@ -235,7 +247,7 @@ class ConnectionSession {
           );
         }
       } else if (connection == "open") {
-        // await this.updateStatusSessionDB(session_name, "CONNECTED");
+        await this.updateStatusSessionDB(session_name, "CONNECTED");
         socket.emit("session-status", { session_name, status: "CONNECTED" });
         console.log(
           color("[SYS]", "#EB6112"),
@@ -249,11 +261,46 @@ class ConnectionSession {
     });
 
     client.ev.on("messages.upsert", async ({ messages, type }) => {
-      if (type !== "notify") return;
-      const message = new Message(client, { messages, type }, session_name);
-      message.mainHandler();
+      try {
+        messages.forEach(message => {
+          if (!message.key.fromMe) return;
+          const msg = getMessageContent(message);
+
+          if (!msg) return;
+
+          if (msg.toLowerCase() === "ping") {
+            sessions.sendMessage(message.key.remoteJid, {
+              text: "From server: Pong",
+            });
+          } else {
+            return;
+          }
+          console.log(message);
+          console.log(getMessageContent(message), type);
+        });
+      } catch (error) {
+        logger.error(error);
+      }
+      //   if (type !== "notify") return;
+      //   const message = new Message(client, { messages, type }, session_name);
+      //   message.mainHandler();
     });
   }
 }
+
+/**
+ * Get the content of a message.
+ * @param {proto.IWebMessageInfo} message
+ * @returns {string}
+ */
+const getMessageContent = (message: proto.IWebMessageInfo) => {
+  try {
+    return (
+      message.message.conversation || message.message.extendedTextMessage?.text
+    );
+  } catch (error) {
+    return "";
+  }
+};
 
 export default ConnectionSession;

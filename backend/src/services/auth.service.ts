@@ -2,9 +2,16 @@ import { compare, genSalt, hash } from "bcrypt";
 import { User } from "@prisma/client";
 import { CreateUserDto, LoginUserDto } from "@dtos/users.dto";
 import { HttpException } from "@exceptions/HttpException";
-import { TokenData } from "@interfaces/auth.interface";
+import {
+  DataStoredInRefreshToken,
+  TokenData,
+} from "@interfaces/auth.interface";
 import { isEmpty } from "@/utils/utils";
-import { createJWTAccessToken, createJWTRefreshToken } from "@/utils/jwt";
+import {
+  createJWTAccessToken,
+  createJWTRefreshToken,
+  validateJWTRefreshToken,
+} from "@/utils/jwt";
 import { db } from "@/libs/db";
 
 class AuthService {
@@ -40,7 +47,6 @@ class AuthService {
       where: { email: userData.email },
     });
 
-    console.log(findUser);
     if (!findUser)
       throw new HttpException(
         409,
@@ -74,22 +80,29 @@ class AuthService {
     return findUser;
   }
 
-  //   public createAccesToken(user: User): TokenData {
-  //     const dataStoredInToken: DataStoredInToken = {
-  //       id: user.id,
-  //       email: user.email,
-  //     };
-  //     const secretKey: string = JWT_ACCESS_TOKEN_SECRET;
-  //     const expiresIn: number = 24 * 60 * 60;
-
-  //     return {
-  //       expiresIn,
-  //       token: sign(dataStoredInToken, secretKey, { expiresIn }),
-  //     };
-  //   }
-
   public createCookie(tokenData: TokenData): string {
     return `Authorization=Bearer ${tokenData.token}; HttpOnly; Max-Age=${tokenData.expiresIn}; SameSite=none;`;
+  }
+
+  public async getNewToken(refreshToken: string | null): Promise<TokenData> {
+    if (refreshToken) {
+      const token = refreshToken.split(" ")[1];
+      const decodedToken = validateJWTRefreshToken(
+        token,
+      ) as DataStoredInRefreshToken;
+      if (decodedToken) {
+        const findUser: User = await this.users.findUnique({
+          where: { email: decodedToken.user_email },
+        });
+        const newAccessToken = createJWTAccessToken(findUser);
+
+        return newAccessToken;
+      } else {
+        throw new HttpException(401, "Refresh Token expired");
+      }
+    } else {
+      throw new HttpException(400, "Missing Refresh token");
+    }
   }
 }
 
