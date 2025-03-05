@@ -76,35 +76,35 @@ export const connectToWhatsApp = async () => {
     }
   });
 
-  sock.ev.on("messages.upsert", async ({ messages, type }) => {
-    try {
-      if (type === "notify") {
-        if (!messages[0]?.key.fromMe) {
-          const captureMessage = messages[0]?.message?.conversation;
-          const numberWa = messages[0]?.key?.remoteJid;
+  //   sock.ev.on("messages.upsert", async ({ messages, type }) => {
+  //     try {
+  //       if (type === "notify") {
+  //         if (!messages[0]?.key.fromMe) {
+  //           const captureMessage = messages[0]?.message?.conversation;
+  //           const numberWa = messages[0]?.key?.remoteJid;
 
-          const compareMessage = captureMessage.toLocaleLowerCase();
+  //           const compareMessage = captureMessage.toLocaleLowerCase();
 
-          if (compareMessage === "ping") {
-            await sock.sendMessage(
-              numberWa,
-              {
-                text: "Pong",
-              },
-              {
-                quoted: messages[0],
-              },
-            );
-          }
-        }
-        if (NODE_ENV === "development") {
-          console.log(messages[0]);
-        }
-      }
-    } catch (error) {
-      console.log("error ", error);
-    }
-  });
+  //           if (compareMessage === "ping") {
+  //             await sock.sendMessage(
+  //               numberWa,
+  //               {
+  //                 text: "Pong",
+  //               },
+  //               {
+  //                 quoted: messages[0],
+  //               },
+  //             );
+  //           }
+  //         }
+  //         if (NODE_ENV === "development") {
+  //           console.log(messages[0]);
+  //         }
+  //       }
+  //     } catch (error) {
+  //       console.log("error ", error);
+  //     }
+  //   });
 
   sock.ev.on("creds.update", saveCreds);
 };

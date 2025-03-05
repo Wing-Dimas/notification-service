@@ -58,6 +58,7 @@ class App {
     this.app.use(express.json());
     this.app.use(express.urlencoded({ extended: true }));
     this.app.use(cookieParser());
+    this.app.use("/uploads", express.static("uploads"));
   }
 
   private initializeRoutes(routes: Routes[]) {
@@ -87,11 +88,7 @@ class App {
   }
 
   private async initializeWhatsapp() {
-    // connectToWhatsApp();
-    const sessionExist = await db.session.findFirst({ take: 1 });
-    if (sessionExist) {
-      new ConnectionSession().createSession(SESSION_NAME);
-    }
+    new ConnectionSession().createSession(SESSION_NAME);
   }
 
   private initializeScheduler() {

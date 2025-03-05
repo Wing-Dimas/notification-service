@@ -1,14 +1,13 @@
-import React from "react";
+import React, { useState } from "react";
 import Layout from "../../../components/layouts/Layout";
 import useListenQrcode from "../hooks/useListenQrcode";
-import useCreateSession from "../hooks/useCreateSession";
 import RuleTemplate from "../components/RuleTemplate";
+import { useSessionWA } from "../../../zustand/useSessionWA";
 
 const ScanPage: React.FC = () => {
-  const { loading, createSession } = useCreateSession();
+  const { status } = useSessionWA();
   const { qrcode } = useListenQrcode();
-
-  console.log(loading);
+  const [loading, setLoading] = useState(true);
 
   return (
     <Layout>
@@ -21,16 +20,16 @@ const ScanPage: React.FC = () => {
             <div className="camera"></div>
             <div className="display">
               <div className="artboard artboard-demo phone-1">
-                {qrcode ? (
+                {status ? (
+                  <div className="text-center">
+                    <img src="/check.svg" alt="" />
+                    <p className="text-sm">Session Berhasil dibuat</p>
+                  </div>
+                ) : qrcode ? (
                   <img src={qrcode} alt="qrcode" />
-                ) : loading ? (
-                  <span className="loading loading-spinner text-primary loading-lg"></span>
                 ) : (
-                  <button className="btn btn-outline" onClick={() => createSession()}>
-                    Create Session
-                  </button>
+                  <span className="loading loading-spinner text-primary loading-lg"></span>
                 )}
-                {/* <HiMiniQrCode className="w-32 h-32" /> */}
               </div>
             </div>
           </div>

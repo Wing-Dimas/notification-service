@@ -56,6 +56,14 @@ class SessionDB {
       });
     }
   }
+
+  public async getStatusSessionDB(session_name: string) {
+    const session = await this.findSession(session_name);
+    if (session) {
+      return session.status;
+    }
+    return null;
+  }
 }
 
 export default SessionDB;

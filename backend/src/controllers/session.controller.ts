@@ -19,6 +19,25 @@ class SessionController {
       next(error);
     }
   };
+
+  public getStatus = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
+    try {
+      const status = await this.sessionService.getStatus();
+      res.status(200).json({
+        message: "success",
+        status: 200,
+        data: {
+          status,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
 }
 
 export default SessionController;

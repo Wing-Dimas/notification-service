@@ -27,6 +27,14 @@ class SessionService extends ConnectionSession {
       throw new HttpException(500, `Internal Server Error: ${error.message}`);
     }
   }
+  public async getStatus(): Promise<string | null> {
+    try {
+      const status = await this.getStatusSessionDB(SESSION_NAME);
+      return status;
+    } catch (error) {
+      throw new HttpException(500, `Internal Server Error: ${error.message}`);
+    }
+  }
 }
 
 export default SessionService;

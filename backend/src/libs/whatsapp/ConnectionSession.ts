@@ -7,6 +7,7 @@ import {
   proto,
   useMultiFileAuthState,
   UserFacingSocketConfig,
+  WAVersion,
 } from "@whiskeysockets/baileys";
 import { Boom } from "@hapi/boom";
 import qrcode from "qrcode";
@@ -24,7 +25,6 @@ type SessionType = {
 } & ReturnType<typeof makeWASocket>;
 
 let sessions: SessionType | null;
-sessions = { ...sessions, isStop: true };
 
 class ConnectionSession extends SessionDB {
   public readonly sessionPath: string;
@@ -83,6 +83,7 @@ class ConnectionSession extends SessionDB {
       printQRInTerminal: false,
       auth: state,
       logger: logger,
+      syncFullHistory: false,
       browser: Browsers.windows("Chrome"),
       version,
     };
@@ -102,25 +103,25 @@ class ConnectionSession extends SessionDB {
       store.writeToFile(storePath);
     }, 10_000);
     store.bind(client.ev);
-    sessions = { ...client, isStop: false };
+    sessions = { ...client, isStop: true };
 
     // When Succeefuly update creds
     client.ev.on("creds.update", saveCreds);
 
     // If Create Connection
     client.ev.on("connection.update", async update => {
-      if (this.count >= 3) {
-        this.deleteSession(session_name);
-        socket.emit("connection-status", {
-          session_name,
-          result: "No Response, QR Scan Canceled",
-        });
-        console.log(`Count : ${this.count}, QR Stopped!`);
-        client.ws.close();
-        client.logout();
-        client.ev.removeAllListeners("connection.update");
-        return;
-      }
+      //   if (this.count >= 3) {
+      //     this.deleteSession(session_name);
+      //     socket.emit("connection-status", {
+      //       session_name,
+      //       result: "No Response, QR Scan Canceled",
+      //     });
+      //     console.log(`Count : ${this.count}, QR Stopped!`);
+      //     client.ws.close();
+      //     client.logout();
+      //     client.ev.removeAllListeners("connection.update");
+      //     return;
+      //   }
 
       if (update.qr) this.generateQr(update.qr, session_name);
 
@@ -259,6 +260,9 @@ class ConnectionSession extends SessionDB {
             "#82E0AA",
           ),
         );
+
+        sessions = { ...sessions, isStop: false };
+        // sendFirstMessage(version, isLatest);
       }
     });
 
@@ -266,26 +270,12 @@ class ConnectionSession extends SessionDB {
       try {
         messages.forEach(message => {
           if (!message.key.fromMe) return;
-          const msg = getMessageContent(message);
 
-          if (!msg) return;
-
-          if (msg.toLowerCase() === "ping") {
-            sessions.sendMessage(message.key.remoteJid, {
-              text: "From server: Pong",
-            });
-          } else {
-            return;
-          }
-          console.log(message);
-          console.log(getMessageContent(message), type);
+          replyMessage(message);
         });
       } catch (error) {
-        logger.error(error);
+        logger.error(error, type);
       }
-      //   if (type !== "notify") return;
-      //   const message = new Message(client, { messages, type }, session_name);
-      //   message.mainHandler();
     });
   }
 }
@@ -302,6 +292,35 @@ const getMessageContent = (message: proto.IWebMessageInfo) => {
     );
   } catch (error) {
     return "";
+  }
+};
+
+const sendFirstMessage = async (version: WAVersion, isLatest: boolean) => {
+  try {
+    await sessions.sendMessage(sessions.user.id, {
+      text: `Whatsapp BOT is Running - Baileys Version ${version}, isLatest : ${isLatest}
+🧩 enter "PING" to test`,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+const replyMessage = async (message: proto.IWebMessageInfo) => {
+  try {
+    const msg = getMessageContent(message);
+
+    if (!msg) return;
+
+    switch (msg.toLowerCase()) {
+      case "ping":
+        await sessions.sendMessage(message.key.remoteJid, {
+          text: "From server: Pong",
+        });
+        break;
+    }
+  } catch (error) {
+    console.log(error);
   }
 };
 

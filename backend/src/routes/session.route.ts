@@ -19,6 +19,12 @@ class SessionRoute implements Routes {
       authMiddleware,
       this.sessionController.createSession,
     );
+    // GET STATUS
+    this.router.get(
+      `${this.path}/get-status`,
+      authMiddleware,
+      this.sessionController.getStatus,
+    );
   }
 }
 

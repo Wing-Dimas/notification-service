@@ -1,5 +1,7 @@
 import { AMQP_URL } from "@/config";
 import { connect } from "amqplib";
+import mime from "mime-types";
+import chalk from "chalk";
 
 export const getAMQPConnection = async (virtualHost: string) => {
   try {
@@ -42,8 +44,12 @@ export const sleep = async (ms: number) => {
 
 export const color = (text: string, color: string) => {
   return !color
-    ? text
+    ? chalk.green(text)
     : color.startsWith("#")
-    ? console.log(text)
-    : console.log(text);
+    ? chalk.hex(color)(text)
+    : chalk.keyword(color)(text);
+};
+
+export const getMimeTypeFromName = (filename: string): string => {
+  return mime.lookup(filename) || "application/octet-stream";
 };

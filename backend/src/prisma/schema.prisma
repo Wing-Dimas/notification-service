@@ -11,29 +11,28 @@ generator client {
 }
 
 model User {
-    id        Int      @id @default(autoincrement())
-    username  String   @unique
-    email     String   @unique
-    password  String
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+    id         Int      @id @default(autoincrement())
+    username   String   @unique
+    email      String   @unique
+    password   String
+    created_at DateTime @default(now())
+    updated_at DateTime @updatedAt
 }
 
-model HistoryMessage {
-    id           Int      @id @default(autoincrement())
-    session_name String?
-    target       String?
-    type         String?
-    createdAt    DateTime @default(now())
-    updatedAt    DateTime @updatedAt
-
-    session Session? @relation(fields: [session_name], references: [session_name], onDelete: Cascade)
+model HistoryMessageWA {
+    id         Int      @id @default(autoincrement())
+    payload    String   @db.LongText()
+    status     Boolean
+    filename   String?
+    mime_type  String?
+    file_path  String?
+    created_at DateTime @default(now())
+    updated_at DateTime @updatedAt
 }
 
 model Session {
-    session_name   String  @id
+    session_name   String   @id
     session_number String
     status         String?
-
-    historyMessages HistoryMessage[]
+    created_at     DateTime @default(now())
 }

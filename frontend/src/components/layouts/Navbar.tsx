@@ -2,9 +2,12 @@ import React, { useEffect, useState } from "react";
 import { Notification } from "../../types/notificatin";
 import { Link } from "react-router-dom";
 import useLogout from "../../features/user/hooks/useLogout";
+import { useSessionWA } from "../../zustand/useSessionWA";
+import { cn } from "../../libs/utils";
 
 const Navbar: React.FC = () => {
   const { logout } = useLogout();
+  const { status } = useSessionWA();
   const [theme, setTheme] = useState<string | null>(
     localStorage.getItem("theme") ? localStorage.getItem("theme") : "light"
   );
@@ -51,9 +54,12 @@ const Navbar: React.FC = () => {
 
         {/* DARKMODE ,NOTIF & AVATAR */}
         <div className="md:flex-1 flex justify-end gap-2 items-center">
-          <div className="tooltip tooltip-left" data-tip="WhatsApp socket is connected">
+          <div
+            className="tooltip tooltip-left"
+            data-tip={`WhatsApp Socket is ${status ? "Connected" : "Disconnected"}`}
+          >
             <div className="h-5 w-5 flex justify-center items-center">
-              <div className="w-2 h-2 bg-success rounded-full"></div>
+              <div className={cn("w-2 h-2 rounded-full", status ? "bg-success" : "bg-error")}></div>
             </div>
           </div>
           <label className="swap swap-rotate btn btn-ghost btn-circle">

@@ -28,14 +28,14 @@ const useListenQrcode = () => {
     });
 
     socket?.on("logger", (event) => {
-      const elements = event.result;
+      const elements = event;
       console.log(elements);
-      setLogger(elements);
+      //   setLogger(elements);
     });
 
     socket?.on(`session-status`, (event) => {
-      setStatus(event.status);
-      console.log(status);
+      //   setStatus(event.status);
+      console.log(event);
     });
 
     return () => {
