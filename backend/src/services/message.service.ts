@@ -1,7 +1,6 @@
 import { SendMessageDto } from "@/dtos/message.dto";
 import { HttpException } from "@/exceptions/HttpException";
-import ConnectionSession from "@/libs/whatsapp/ConnectionSession";
-// import { sock } from "@/libs/whatsapp";
+import { ConnectionSession } from "@/libs/whatsapp";
 
 class MessageService extends ConnectionSession {
   public async sendMessage(message: SendMessageDto): Promise<void> {

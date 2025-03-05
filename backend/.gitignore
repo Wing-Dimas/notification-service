@@ -131,7 +131,7 @@ dist
 
 # session
 session_auth_info
-session
+session/session_1
 session/store/*.json
 
 # upluoder

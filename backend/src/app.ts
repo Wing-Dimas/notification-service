@@ -11,9 +11,9 @@ import errorMiddleware from "@middlewares/error.middleware";
 import { logger, stream } from "@utils/logger";
 import { app, server } from "@/libs/socket";
 // import { connectToWhatsApp } from "./libs/whatsapp";
-import ConnectionSession from "./libs/whatsapp/ConnectionSession";
-import { db } from "./libs/db";
-import Schedule from "./jobs";
+import { ConnectionSession } from "./libs/whatsapp";
+import { db } from "@libs/db";
+import Schedule from "@jobs/index";
 
 class App {
   public app: express.Application;
@@ -25,12 +25,12 @@ class App {
     this.env = NODE_ENV || "development";
     this.port = PORT || 3000;
 
-    this.initializeWhatsapp();
     this.initializeMiddlewares();
     this.initializeRoutes(routes);
     this.initializeSwagger();
     this.initializeErrorHandling();
-    this.initializeScheduler();
+    // this.initializeWhatsapp();
+    // this.initializeScheduler();
   }
 
   public listen() {

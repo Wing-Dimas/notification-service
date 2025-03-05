@@ -141,7 +141,7 @@ export default class ListenMessageWAFromAMQP {
         // SAVE TO DB
         await db.historyMessageWA.create({
           data: {
-            payload: msg.content.toString(),
+            payload: JSON.stringify({ ...content, data: null }),
             status: true,
             file_path: `/uploads/wa/${newFilename}`,
             filename: content.filename,

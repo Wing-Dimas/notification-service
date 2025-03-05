@@ -29,7 +29,9 @@
       "@middlewares/*": ["middlewares/*"],
       "@routes/*": ["routes/*"],
       "@services/*": ["services/*"],
-      "@utils/*": ["utils/*"]
+      "@utils/*": ["utils/*"],
+      "@libs/*": ["libs/*"],
+      "@jobs/*": ["jobs/*"]
     }
   },
   "module": {

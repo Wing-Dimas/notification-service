@@ -31,7 +31,8 @@
       "@routes/*": ["routes/*"],
       "@services/*": ["services/*"],
       "@utils/*": ["utils/*"],
-      "@libs/*": ["libs/*"]
+      "@libs/*": ["libs/*"],
+      "@jobs/*": ["jobs/*"]
     }
   },
   "include": ["src/**/*.ts", "src/**/*.json", ".env"],
