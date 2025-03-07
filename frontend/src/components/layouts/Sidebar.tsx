@@ -1,12 +1,14 @@
 import React from "react";
 import { FiHome, FiUsers } from "react-icons/fi";
 import { HiMiniSquares2X2 } from "react-icons/hi2";
+import { FaWhatsapp } from "react-icons/fa";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "../../libs/utils";
 
 const ROUTES = [
   { label: "Dashboard", path: "/dashboard", icon: <FiHome className="w-5 h-5" /> },
   { label: "Scan", path: "/dashboard/scan", icon: <FiUsers className="w-5 h-5" /> },
+  { label: "Whastaap", path: "/dashboard/whatsapp", icon: <FaWhatsapp className="w-5 h-5" /> },
 ];
 
 const Sidebar: React.FC = () => {

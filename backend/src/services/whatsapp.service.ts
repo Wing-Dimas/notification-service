@@ -8,7 +8,7 @@ import { createPaginator, PaginatedResult } from "prisma-pagination";
 
 class WhatsappService {
   public historyMessage = db.historyMessageWA;
-  public paginator = createPaginator({ perPage: 2 });
+  public paginator = createPaginator({ perPage: 10 });
 
   public async getMessage(
     query: GetMessageDto,
