@@ -4,7 +4,11 @@ import validationMiddleware from "@/middlewares/validation.middleware";
 import authMiddleware from "@/middlewares/auth.middleware";
 import WhatsappController from "@/controllers/whatsapp.controller";
 import multerMiddleware from "@/middlewares/multer.middleware";
-import { GetMessageWADto, GetSingleMessageWADto } from "@/dtos/whatsapp.dto";
+import {
+  GetMessageWADto,
+  GetSingleMessageWADto,
+  SendMessageWADto,
+} from "@/dtos/whatsapp.dto";
 
 class WhatsappMessageRoute implements Routes {
   public path = "/api/whatsapp";
@@ -37,6 +41,14 @@ class WhatsappMessageRoute implements Routes {
       authMiddleware,
       multerMiddleware("wa").single("file"),
       this.whatsappController.editMessage,
+    );
+
+    // SEND MESSAGE
+    this.router.post(
+      `${this.path}/message/:id/send-message`,
+      authMiddleware,
+      validationMiddleware(SendMessageWADto, "params"),
+      this.whatsappController.sendMessage,
     );
   }
 }

@@ -1,6 +1,6 @@
 import React, { forwardRef } from "react";
 import { cn } from "../libs/utils";
-import { HiOutlineXMark } from "react-icons/hi2";
+import { HiOutlineExclamationCircle, HiOutlineXMark } from "react-icons/hi2";
 
 type ModalProps = {
   title?: string;
@@ -60,9 +60,11 @@ const Modal = forwardRef<HTMLElement, ModalProps>(
           )}
           {onlyQuestion ? (
             <section ref={ref} className={cn("p-4", className)} {...props}>
+              <HiOutlineExclamationCircle className={cn(`w-32 h-32 mx-auto text-warning`)} />
+
               <p className="text-center">{questionText}</p>
               <div className="flex gap-2 justify-center mt-8">
-                <button className={cn("btn btn-error text-white", confirmButtonStyle)} onClick={onConfirm}>
+                <button className={cn("btn text-white", confirmButtonStyle)} onClick={onConfirm}>
                   {confirmButtonText}
                 </button>
                 <button className={cn("btn btn-outline ", cancelButtonStyle)} onClick={onCancel}>

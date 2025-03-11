@@ -11,7 +11,7 @@ class Client {
   private from: string;
   constructor(client: SessionType) {
     this.client = client;
-    this.from = client.user.id;
+    this.from = client?.user?.id || null;
   }
 
   async sendText(text: string) {
@@ -88,6 +88,7 @@ class Client {
           });
           break;
       }
+
       return sent;
     } catch (error) {
       throw new Error(error);

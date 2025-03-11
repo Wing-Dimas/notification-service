@@ -1,6 +1,5 @@
 import { useState } from "react";
 import api from "../../../api";
-import { toast } from "react-hot-toast";
 
 const useEditMessageWA = () => {
   const [loading, setLoading] = useState(false);
@@ -11,12 +10,9 @@ const useEditMessageWA = () => {
     setIsError(false);
     try {
       await api.put(`/whatsapp/message/${id}/edit`, data);
-      toast.success("Sukses edit data");
     } catch (error) {
-      if (error) {
-        toast.error((error as { message: string; code: number })?.message || "occured error");
-      }
       setIsError(true);
+      throw new Error((error as { message: string; code: number })?.message || "occured error");
     } finally {
       setLoading(false);
     }

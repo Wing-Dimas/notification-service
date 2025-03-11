@@ -10,6 +10,7 @@ import TextAreaInput from "../../../components/input/TextAreaInput";
 import InputFile from "../../../components/input/InputFile";
 import FilePreview from "../../../components/FilePreview";
 import useEditMessageWA from "../hooks/useEditMessageWA";
+import toast from "react-hot-toast";
 
 interface EditMessageProps {
   message: HistoryMessageWA;
@@ -17,7 +18,7 @@ interface EditMessageProps {
 }
 
 const EditMessage: React.FC<EditMessageProps> = ({ message, onClose }) => {
-  const { loading, editMessageWA, isError } = useEditMessageWA();
+  const { loading, editMessageWA } = useEditMessageWA();
 
   let parsedPayload;
   const isJson = validateJson(message.payload);
@@ -48,11 +49,16 @@ const EditMessage: React.FC<EditMessageProps> = ({ message, onClose }) => {
       const file = data.file[0];
       formData.append("file", file);
     }
-    await editMessageWA(message.id, formData);
-    if (isError) return;
+
+    await toast.promise(editMessageWA(message.id, formData), {
+      loading: "Meyimpan...",
+      success: "Sukses memperbaruhi data",
+      error: (err) => err.message,
+    });
     reset();
     onClose();
-    await delay(1000);
+    await delay(2000);
+    window.location.reload();
   };
 
   const formatFileSize = (size: number): string => {

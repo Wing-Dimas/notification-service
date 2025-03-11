@@ -10,9 +10,7 @@ import { Routes } from "@interfaces/routes.interface";
 import errorMiddleware from "@middlewares/error.middleware";
 import { logger, stream } from "@utils/logger";
 import { app, server } from "@/libs/socket";
-// import { connectToWhatsApp } from "./libs/whatsapp";
 import { ConnectionSession } from "./libs/whatsapp";
-import { db } from "@libs/db";
 import Schedule from "@jobs/index";
 
 class App {

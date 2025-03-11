@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { Notification } from "../../types/notificatin";
-import { Link } from "react-router-dom";
 import useLogout from "../../features/user/hooks/useLogout";
 import { useSessionWA } from "../../zustand/useSessionWA";
 import { cn } from "../../libs/utils";
@@ -48,9 +47,9 @@ const Navbar: React.FC = () => {
       </div>
 
       <div className="flex justify-between flex-1 flex-row items-center">
-        <Link to="/" className="text-xl md:text-2xl font-semibold btn btn-ghost">
+        <div className="text-xl md:text-2xl font-semibold">
           <span>Admin Dashboard</span>
-        </Link>
+        </div>
 
         {/* DARKMODE ,NOTIF & AVATAR */}
         <div className="md:flex-1 flex justify-end gap-2 items-center">

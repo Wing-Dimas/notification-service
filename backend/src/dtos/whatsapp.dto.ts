@@ -28,3 +28,8 @@ export class EditMessageWADto {
   @IsString()
   public message: string;
 }
+
+export class SendMessageWADto {
+  @IsString()
+  public id: string;
+}

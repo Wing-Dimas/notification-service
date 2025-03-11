@@ -6,17 +6,29 @@ import PayloadRendered from "../../../components/PayloadRendered";
 import Modal from "../../../components/Modal";
 import EditMessage from "./EditMessage";
 import { Link } from "react-router-dom";
+import useSendMessageWA from "../hooks/useSendMessageWA";
+import toast from "react-hot-toast";
 
 interface RenderMessageProps {
   message: HistoryMessageWA;
 }
 
 const RenderMessage: React.FC<RenderMessageProps> = ({ message }) => {
+  // STATE
+  const { sendMessageWA } = useSendMessageWA();
+
+  // MODAL
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isSendModalOpen, setIsSendModalOpen] = useState(false);
 
-  const handleModal = () => {
-    setIsEditModalOpen(true);
+  const onSendMessage = async () => {
+    toast.promise(sendMessageWA(message.id), {
+      loading: "Sedang mengirim pesan",
+      success: "Berhasil mengirim pesan",
+      error: (err) => err.message,
+    });
+    setIsSendModalOpen(false);
   };
 
   return (
@@ -48,7 +60,7 @@ const RenderMessage: React.FC<RenderMessageProps> = ({ message }) => {
             <EditMessage message={message} onClose={() => setIsEditModalOpen(false)} />
           </Modal>
           <div className="tooltip tooltip-top" data-tip="Edit Data">
-            <button className="btn btn-sm btn-warning" onClick={handleModal}>
+            <button className="btn btn-sm btn-warning" onClick={() => setIsEditModalOpen(true)}>
               <HiOutlinePencilSquare />
             </button>
           </div>
@@ -59,6 +71,7 @@ const RenderMessage: React.FC<RenderMessageProps> = ({ message }) => {
             isOpen={isDeleteModalOpen}
             onlyQuestion
             onConfirm={() => {}}
+            confirmButtonStyle="btn-error"
             onCancel={() => setIsDeleteModalOpen(false)}
             withHeader={false}
             containerStyle="max-w-md"
@@ -70,8 +83,19 @@ const RenderMessage: React.FC<RenderMessageProps> = ({ message }) => {
           </div>
           {/* END DELETE BUTTON */}
           {/* RESEND */}
+          <Modal
+            onClose={() => setIsSendModalOpen(false)}
+            isOpen={isSendModalOpen}
+            onlyQuestion
+            onConfirm={onSendMessage}
+            confirmButtonStyle="btn-info"
+            onCancel={() => setIsSendModalOpen(false)}
+            withHeader={false}
+            containerStyle="max-w-md"
+            questionText="Apakah anda yakin ingin mengirim ulang message ini ke whatsapp?"
+          />
           <div className="tooltip tooltip-top" data-tip="Kirim Ulang">
-            <button className="btn btn-sm btn-info text-white">
+            <button className="btn btn-sm btn-info text-white" onClick={() => setIsSendModalOpen(true)}>
               <HiOutlineArrowPath />
             </button>
           </div>
