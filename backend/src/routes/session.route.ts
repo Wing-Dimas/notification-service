@@ -4,7 +4,7 @@ import authMiddleware from "@middlewares/auth.middleware";
 import SessionController from "@/controllers/session.controller";
 
 class SessionRoute implements Routes {
-  public path = "/session";
+  public path = "/api/session";
   public router = Router();
   public sessionController = new SessionController();
 

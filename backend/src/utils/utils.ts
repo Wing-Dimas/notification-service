@@ -2,6 +2,13 @@ import { AMQP_URL } from "@/config";
 import { connect } from "amqplib";
 import mime from "mime-types";
 import chalk from "chalk";
+import {
+  ACCEPTED_DOCUMENT_TYPES,
+  ACCEPTED_IMAGE_TYPES,
+  ACCEPTED_VIDEO_TYPES,
+} from "@/constants/valid-file-uploads";
+
+export type UnionTypeWithString<T extends string> = T | Omit<string, T>;
 
 export const getAMQPConnection = async (virtualHost: string) => {
   try {
@@ -50,6 +57,40 @@ export const color = (text: string, color: string) => {
     : chalk.keyword(color)(text);
 };
 
+export const validateJson = (data: string) => {
+  if (typeof data === "string") {
+    try {
+      JSON.parse(data);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  return false;
+};
+
 export const getMimeTypeFromName = (filename: string): string => {
   return mime.lookup(filename) || "application/octet-stream";
+};
+
+export const getFileCategory = (
+  mimeType: string,
+): UnionTypeWithString<"image" | "video" | "document"> => {
+  if (ACCEPTED_IMAGE_TYPES.includes(mimeType)) return "image";
+  if (ACCEPTED_VIDEO_TYPES.includes(mimeType)) return "video";
+  if (ACCEPTED_DOCUMENT_TYPES.includes(mimeType)) return "document";
+  return "document";
+};
+
+export const isValidExt = (filename: string): boolean => {
+  const mimeType = getMimeTypeFromName(filename);
+  const validExt = [
+    ...ACCEPTED_IMAGE_TYPES,
+    ...ACCEPTED_VIDEO_TYPES,
+    ...ACCEPTED_DOCUMENT_TYPES,
+  ];
+
+  if (validExt.includes(mimeType)) return true;
+  return false;
 };

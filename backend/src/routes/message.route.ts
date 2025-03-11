@@ -6,7 +6,7 @@ import validationMiddleware from "@/middlewares/validation.middleware";
 import authMiddleware from "@/middlewares/auth.middleware";
 
 class MessageRoute implements Routes {
-  public path = "/";
+  public path = "/api";
   public router = Router();
   public messageController = new MessageController();
 
@@ -16,7 +16,7 @@ class MessageRoute implements Routes {
 
   private initializeRoutes() {
     this.router.post(
-      `${this.path}send-message`,
+      `${this.path}/send-message`,
       validationMiddleware(SendMessageDto, "body"),
       authMiddleware,
       this.messageController.sendMessage,

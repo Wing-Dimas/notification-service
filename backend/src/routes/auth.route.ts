@@ -6,7 +6,7 @@ import authMiddleware from "@middlewares/auth.middleware";
 import validationMiddleware from "@middlewares/validation.middleware";
 
 class AuthRoute implements Routes {
-  public path = "/";
+  public path = "/api";
   public router = Router();
   public authController = new AuthController();
 
@@ -17,25 +17,25 @@ class AuthRoute implements Routes {
   private initializeRoutes() {
     // SIGNUP
     this.router.post(
-      `${this.path}signup`,
+      `${this.path}/signup`,
       validationMiddleware(CreateUserDto, "body"),
       this.authController.signUp,
     );
     // LOGIN
     this.router.post(
-      `${this.path}login`,
+      `${this.path}/login`,
       validationMiddleware(LoginUserDto, "body"),
       this.authController.logIn,
     );
     // LOGOUT
     this.router.post(
-      `${this.path}logout`,
+      `${this.path}/logout`,
       authMiddleware,
       this.authController.logOut,
     );
     // GENERATE TOKEN
     this.router.post(
-      `${this.path}refresh-token`,
+      `${this.path}/refresh-token`,
       this.authController.getNewToken,
     );
   }

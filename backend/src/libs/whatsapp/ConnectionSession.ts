@@ -20,7 +20,7 @@ import SessionDB from "./SessionDB";
 import { logDir, logger } from "./logger";
 import { join } from "path";
 
-type SessionType = {
+export type SessionType = {
   isStop: boolean;
 } & ReturnType<typeof makeWASocket>;
 
@@ -84,6 +84,8 @@ class ConnectionSession extends SessionDB {
       auth: state,
       logger: logger,
       syncFullHistory: false,
+      shouldSyncHistoryMessage: () => false,
+      markOnlineOnConnect: false,
       browser: Browsers.windows("Chrome"),
       version,
     };

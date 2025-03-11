@@ -29,8 +29,8 @@ class App {
     this.initializeRoutes(routes);
     this.initializeSwagger();
     this.initializeErrorHandling();
-    // this.initializeWhatsapp();
-    // this.initializeScheduler();
+    this.initializeWhatsapp();
+    this.initializeScheduler();
   }
 
   public listen() {

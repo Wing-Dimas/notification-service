@@ -1,38 +1,27 @@
 import { NODE_ENV } from "@/config";
-import { Content, Headers } from "@/interfaces/amqp.interface";
+import { Content } from "@/interfaces/amqp.interface";
 import { db } from "@/libs/db";
-import ConnectionSession from "@/libs/whatsapp/ConnectionSession";
+import { ConnectionSession, Client } from "@/libs/whatsapp";
 import { logger } from "@/utils/logger";
-import { getAMQPConnection, getMimeTypeFromName } from "@/utils/utils";
+import {
+  getAMQPConnection,
+  getFileCategory,
+  getMimeTypeFromName,
+  isValidExt,
+} from "@/utils/utils";
 import { proto } from "@whiskeysockets/baileys";
 import { GetMessage } from "amqplib";
 import fs from "fs";
-import path, { join } from "path";
-
-const fileCategories = {
-  image: [".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp", ".svg"],
-  video: [".mp4", ".mov", ".avi", ".mkv", ".flv", ".wmv", ".webm"],
-  document: [
-    ".pdf",
-    ".doc",
-    ".docx",
-    ".txt",
-    ".rtf",
-    ".xls",
-    ".xlsx",
-    ".ppt",
-    ".pptx",
-  ],
-};
-
-type FileCategory = keyof typeof fileCategories;
+import { join } from "path";
 
 export default class ListenMessageWAFromAMQP {
   private readonly channelName = "notification";
   private readonly queueName = "whatsapp";
   private readonly virtualHostName = "/";
+  private client: Client;
 
   constructor() {
+    this.client = new Client(new ConnectionSession().getClient());
     this.handler();
   }
 
@@ -58,20 +47,22 @@ export default class ListenMessageWAFromAMQP {
         return;
       }
 
+      //   SAVE MESSAGE TO DB
+      const historyMessageData = await db.historyMessageWA.create({
+        data: {
+          payload: msg.content.toString(),
+          status: false,
+        },
+      });
+
+      if (!historyMessageData) return;
+      //   REMOVE MESSAGE FROM QUEUE
+      channel.ack(msg);
+
       //   VALIDATE CONTENT
       const isValidContent = this.validateContent(msg);
 
-      if (!isValidContent) {
-        await db.historyMessageWA.create({
-          data: {
-            payload: msg.content.toString(),
-            status: false,
-          },
-        });
-
-        channel.ack(msg);
-        return;
-      }
+      if (!isValidContent) return;
 
       //   PARSING CONTENT
       const content = JSON.parse(msg.content.toString()) as Content;
@@ -80,15 +71,15 @@ export default class ListenMessageWAFromAMQP {
 
       let sent: proto.IWebMessageInfo;
 
+      //  params msg
       if (!content.data) {
-        //   WITHOUT DOCUMENT
+        // WITHOUT DOCUMENT
         // SEND MESSAGE
-        sent = await session.sendMessage(session.user.id, {
-          text: message,
-        });
+        sent = await this.client.sendText(message);
 
         // SAVE TO DB
-        await db.historyMessageWA.create({
+        await db.historyMessageWA.update({
+          where: { id: historyMessageData.id },
           data: {
             payload: msg.content.toString(),
             status: true,
@@ -96,12 +87,12 @@ export default class ListenMessageWAFromAMQP {
         });
       } else {
         //   WITH DOCUEMNT
-        const mimeType = getMimeTypeFromName(content.filename);
-        const extCategory = this.getFileCategory(content.filename);
         const decodedFile = Buffer.from(content.data, "base64");
+        const mimeType = getMimeTypeFromName(content.filename);
         const folderName = join(__dirname, "../../uploads/wa");
         const newFilename = `${Date.now()}_${content.filename}`;
         const filePath = join(folderName, newFilename);
+        const extCategory = getFileCategory(mimeType);
 
         //   CREATE FOLDER
         if (!fs.existsSync(folderName)) {
@@ -113,33 +104,17 @@ export default class ListenMessageWAFromAMQP {
         fs.writeFileSync(filePath, decodedFile as Uint8Array);
 
         // SEND MESSAGE BASED ON MEDIA
-        switch (extCategory) {
-          case "image":
-            sent = await session.sendMessage(session.user.id, {
-              caption: message,
-              image: fs.readFileSync(filePath),
-              mimetype: mimeType,
-            });
-            break;
-          case "video":
-            sent = await session.sendMessage(session.user.id, {
-              video: fs.readFileSync(filePath),
-              caption: message,
-              mimetype: mimeType,
-            });
-            break;
-          default:
-            sent = await session.sendMessage(session.user.id, {
-              caption: message,
-              document: fs.readFileSync(filePath),
-              fileName: content.filename,
-              mimetype: mimeType,
-            });
-            break;
-        }
+        sent = await this.client.sendMedia(
+          filePath,
+          content.filename,
+          mimeType,
+          message,
+          extCategory,
+        );
 
         // SAVE TO DB
-        await db.historyMessageWA.create({
+        await db.historyMessageWA.update({
+          where: { id: historyMessageData.id },
           data: {
             payload: JSON.stringify({ ...content, data: null }),
             status: true,
@@ -150,13 +125,8 @@ export default class ListenMessageWAFromAMQP {
         });
       }
 
-      //   REMOVE MESSAGE FROM QUEUE
-      channel.ack(msg);
       logger.debug(sent);
     } catch (error) {
-      if (msg) {
-        channel.ack(msg);
-      }
       logger.error(error);
     } finally {
       // CLOSE CONNECTION
@@ -165,29 +135,12 @@ export default class ListenMessageWAFromAMQP {
     }
   }
 
-  public getFileCategory(filename: string): FileCategory {
-    const ext = path.extname(filename).toLowerCase();
-
-    if (fileCategories.image.includes(ext)) return "image";
-    if (fileCategories.video.includes(ext)) return "video";
-    return "document"; // Default untuk dokumen
-  }
-
-  public isValidExt(filename: string): boolean {
-    const ext = path.extname(filename).toLowerCase();
-
-    if (fileCategories.image.includes(ext)) return true;
-    if (fileCategories.video.includes(ext)) return true;
-    if (fileCategories.document.includes(ext)) return true;
-    return false;
-  }
-
   public validateContent(msg: GetMessage): boolean {
     try {
       const content = JSON.parse(msg.content.toString()) as Content;
 
       if ("data" in content) {
-        return "filename" in content && this.isValidExt(content.filename);
+        return "filename" in content && isValidExt(content.filename);
       }
 
       return "message" in content;

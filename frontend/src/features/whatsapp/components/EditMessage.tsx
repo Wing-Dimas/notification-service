@@ -3,18 +3,26 @@ import { HistoryMessageWA } from "../../../types/whatsapp";
 import PayloadRendered from "../../../components/PayloadRendered";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { editMessageFormSchema, EditMessageFormSchema } from "../form/edit-message";
-import { getFileCategory } from "../../../libs/utils";
+import { delay, getFileCategory, validateJson } from "../../../libs/utils";
 import ErrorText from "../../../components/input/ErrorText";
 import { useForm } from "react-hook-form";
 import TextAreaInput from "../../../components/input/TextAreaInput";
 import InputFile from "../../../components/input/InputFile";
 import FilePreview from "../../../components/FilePreview";
+import useEditMessageWA from "../hooks/useEditMessageWA";
 
 interface EditMessageProps {
   message: HistoryMessageWA;
+  onClose: () => void;
 }
 
-const EditMessage: React.FC<EditMessageProps> = ({ message }) => {
+const EditMessage: React.FC<EditMessageProps> = ({ message, onClose }) => {
+  const { loading, editMessageWA, isError } = useEditMessageWA();
+
+  let parsedPayload;
+  const isJson = validateJson(message.payload);
+  if (isJson) parsedPayload = JSON.parse(message.payload);
+
   const {
     register,
     handleSubmit,
@@ -24,50 +32,27 @@ const EditMessage: React.FC<EditMessageProps> = ({ message }) => {
   } = useForm<EditMessageFormSchema>({
     resolver: zodResolver(editMessageFormSchema),
     defaultValues: {
-      message: "",
+      message: isJson ? parsedPayload.message : message.payload,
       file: undefined,
     },
   });
 
   const selectedFile = watch("file")?.[0];
 
-  const onSubmit = (data: EditMessageFormSchema) => {
-    console.log(selectedFile);
-    console.log("Form data:", data);
-
+  const onSubmit = async (data: EditMessageFormSchema) => {
     // Membuat objek FormData untuk pengiriman data
     const formData = new FormData();
     formData.append("message", data.message);
-
     // Memeriksa apakah file ada sebelum menambahkannya ke FormData
     if (data.file && data.file.length > 0) {
       const file = data.file[0];
       formData.append("file", file);
-
-      //   console.log("File name:", file.name);
-      //   console.log("File type:", file.type);
-      //   console.log("File size:", file.size);
-      //   console.log("File category:", getFileCategory(file.type));
-    } else {
-      console.log("No file uploaded");
     }
-
-    // Contoh fetch API untuk mengirim data
-    // fetch('/api/submit-form', {
-    //   method: 'POST',
-    //   body: formData
-    // })
-    // .then(response => response.json())
-    // .then(result => {
-    //   console.log('Success:', result);
-    //   reset();
-    // })
-    // .catch(error => {
-    //   console.error('Error:', error);
-    // });
-
-    // Reset form setelah submit berhasil
+    await editMessageWA(message.id, formData);
+    if (isError) return;
     reset();
+    onClose();
+    await delay(1000);
   };
 
   const formatFileSize = (size: number): string => {
@@ -80,7 +65,7 @@ const EditMessage: React.FC<EditMessageProps> = ({ message }) => {
     <div>
       <div className="mb-8 bg-base-200 p-2">
         <p className="font-bold mb-2">Payload</p>
-        <PayloadRendered payload={message.payload} />
+        <PayloadRendered payload={message.payload} className="max-w-full w-full" />
       </div>
 
       <h2 className="font-semibold">Perbaiki Data</h2>
@@ -118,9 +103,9 @@ const EditMessage: React.FC<EditMessageProps> = ({ message }) => {
           )}
         </div>
 
-        <button type="submit" className={"btn mt-2 w-full btn-primary"}>
+        <button type="submit" className="btn mt-2 w-full btn-primary" disabled={loading}>
           Save
-          {/* {loading && <span className="loading loading-spinner loading-xs"></span>} */}
+          {loading && <span className="loading loading-spinner loading-xs"></span>}
         </button>
       </form>
     </div>

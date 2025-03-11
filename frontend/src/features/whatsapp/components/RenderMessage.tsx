@@ -45,7 +45,7 @@ const RenderMessage: React.FC<RenderMessageProps> = ({ message }) => {
         <div className="flex gap-2">
           {/* EDIT BUTTON */}
           <Modal onClose={() => setIsEditModalOpen(false)} isOpen={isEditModalOpen} title="Edit Data">
-            <EditMessage message={message} />
+            <EditMessage message={message} onClose={() => setIsEditModalOpen(false)} />
           </Modal>
           <div className="tooltip tooltip-top" data-tip="Edit Data">
             <button className="btn btn-sm btn-warning" onClick={handleModal}>

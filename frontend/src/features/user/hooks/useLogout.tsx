@@ -10,14 +10,10 @@ const useLogout = () => {
   const navigate = useNavigate();
 
   const logout = async () => {
-    // const success = handleInputErrors({ username, password });
-
-    // if (!success) return;
     setLoading(true);
 
     try {
-      const res = await api.post("/logout");
-      console.log(res);
+      await api.post("/logout");
       // local storage
       localStorage.removeItem("token");
       localStorage.removeItem("user");
@@ -26,8 +22,6 @@ const useLogout = () => {
 
       navigate("/");
     } catch (error) {
-      console.log(error);
-      //   toast.error(error.message);
       if (error) {
         toast.error((error as { message: string; code: number })?.message || "occured error");
       }
