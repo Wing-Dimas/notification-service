@@ -20,14 +20,16 @@ model User {
 }
 
 model HistoryMessageWA {
-    id         Int      @id @default(autoincrement())
-    payload    String   @db.LongText()
+    id         Int       @id @default(autoincrement())
+    payload    String    @db.LongText()
     status     Boolean
     filename   String?
     mime_type  String?
     file_path  String?
-    created_at DateTime @default(now())
-    updated_at DateTime @updatedAt
+    created_at DateTime  @default(now())
+    updated_at DateTime  @updatedAt
+    sent_at    DateTime?
+    deleted_at DateTime?
 }
 
 model Session {

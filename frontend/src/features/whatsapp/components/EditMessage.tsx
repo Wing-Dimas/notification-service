@@ -3,7 +3,7 @@ import { HistoryMessageWA } from "../../../types/whatsapp";
 import PayloadRendered from "../../../components/PayloadRendered";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { editMessageFormSchema, EditMessageFormSchema } from "../form/edit-message";
-import { delay, getFileCategory, validateJson } from "../../../libs/utils";
+import { getFileCategory, validateJson } from "../../../libs/utils";
 import ErrorText from "../../../components/input/ErrorText";
 import { useForm } from "react-hook-form";
 import TextAreaInput from "../../../components/input/TextAreaInput";
@@ -11,6 +11,7 @@ import InputFile from "../../../components/input/InputFile";
 import FilePreview from "../../../components/FilePreview";
 import useEditMessageWA from "../hooks/useEditMessageWA";
 import toast from "react-hot-toast";
+import useGetMessageWA from "../hooks/useGetMessageWA";
 
 interface EditMessageProps {
   message: HistoryMessageWA;
@@ -18,6 +19,7 @@ interface EditMessageProps {
 }
 
 const EditMessage: React.FC<EditMessageProps> = ({ message, onClose }) => {
+  const { refetch } = useGetMessageWA();
   const { loading, editMessageWA } = useEditMessageWA();
 
   let parsedPayload;
@@ -28,7 +30,6 @@ const EditMessage: React.FC<EditMessageProps> = ({ message, onClose }) => {
     register,
     handleSubmit,
     formState: { errors },
-    reset,
     watch,
   } = useForm<EditMessageFormSchema>({
     resolver: zodResolver(editMessageFormSchema),
@@ -49,16 +50,16 @@ const EditMessage: React.FC<EditMessageProps> = ({ message, onClose }) => {
       const file = data.file[0];
       formData.append("file", file);
     }
+    onClose();
 
     await toast.promise(editMessageWA(message.id, formData), {
       loading: "Meyimpan...",
-      success: "Sukses memperbaruhi data",
+      success: () => {
+        refetch();
+        return "Sukses memperbaruhi data";
+      },
       error: (err) => err.message,
     });
-    reset();
-    onClose();
-    await delay(2000);
-    window.location.reload();
   };
 
   const formatFileSize = (size: number): string => {

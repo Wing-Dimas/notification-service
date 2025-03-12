@@ -41,7 +41,7 @@ const WhatsappPage: React.FC = () => {
                 <tr>
                   <th>Payload</th>
                   <th>Status</th>
-                  <th>Tanggal</th>
+                  <th>Tanggal Terkirim</th>
                   <th>File</th>
                   <th>Action</th>
                 </tr>

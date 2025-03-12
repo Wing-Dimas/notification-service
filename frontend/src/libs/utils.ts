@@ -1,9 +1,7 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { nanoid } from "nanoid";
-import moment from "moment";
 import { ACCEPTED_DOCUMENT_TYPES, ACCEPTED_IMAGE_TYPES, ACCEPTED_VIDEO_TYPES } from "../constants/valid-file-upload";
-moment.locale("id");
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -17,9 +15,34 @@ export async function delay(ms: number = 3000) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-export function formatDate(date: string = "") {
-  if (date === "") return "";
-  return moment(date).format("dddd, DD MMM YYYY");
+export function formatDate(dateInput: string = "") {
+  if (dateInput === "" || dateInput === null) return "";
+
+  const date = new Date(dateInput);
+  const formatter = new Intl.DateTimeFormat("id-ID", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+  const formattedDate = formatter.format(date);
+  return formattedDate;
+}
+
+export function formatTime(dateInput: string = "") {
+  if (dateInput === "" || dateInput === null) return "";
+  const date = new Date(dateInput); // Tanggal dan waktu saat ini
+
+  const formatter = new Intl.DateTimeFormat("id-ID", {
+    hour: "numeric", // Menampilkan jam (10)
+    minute: "numeric", // Menampilkan menit (12)
+    hour12: false, // Format 24 jam (false) atau 12 jam (true)
+    timeZone: "Asia/Jakarta", // Zona waktu WIB
+    timeZoneName: "short", // Menampilkan singkatan zona waktu (WIB)
+  });
+
+  const formattedTime = formatter.format(date);
+  return formattedTime;
 }
 
 export function validateJson(data: string) {

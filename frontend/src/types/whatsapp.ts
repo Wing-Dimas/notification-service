@@ -7,4 +7,6 @@ export interface HistoryMessageWA {
   file_path?: string;
   created_at?: string;
   updated_at?: string;
+  sent_at?: string;
+  deleted_at?: string;
 }

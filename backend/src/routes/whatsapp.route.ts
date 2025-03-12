@@ -5,6 +5,8 @@ import authMiddleware from "@/middlewares/auth.middleware";
 import WhatsappController from "@/controllers/whatsapp.controller";
 import multerMiddleware from "@/middlewares/multer.middleware";
 import {
+  DeleteMessageWADto,
+  EditMessageWADto,
   GetMessageWADto,
   GetSingleMessageWADto,
   SendMessageWADto,
@@ -39,8 +41,17 @@ class WhatsappMessageRoute implements Routes {
     this.router.put(
       `${this.path}/message/:id/edit`,
       authMiddleware,
+      validationMiddleware(EditMessageWADto, "params"),
       multerMiddleware("wa").single("file"),
       this.whatsappController.editMessage,
+    );
+
+    // DELETE MESSAGE
+    this.router.delete(
+      `${this.path}/message/:id`,
+      authMiddleware,
+      validationMiddleware(DeleteMessageWADto, "params"),
+      this.whatsappController.deleteMessage,
     );
 
     // SEND MESSAGE

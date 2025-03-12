@@ -1,4 +1,5 @@
 import {
+  DeleteMessageWADto,
   EditMessageWADto,
   GetMessageWADto,
   GetSingleMessageWADto,
@@ -35,7 +36,7 @@ class WhatsappService {
       this.historyMessage,
       {
         orderBy: { [order_by]: sort },
-        where: { payload: { contains: search } },
+        where: { payload: { contains: search }, deleted_at: null },
       },
       { page: page },
     );
@@ -48,9 +49,11 @@ class WhatsappService {
   ): Promise<HistoryMessageWA> {
     if (isNaN(Number(params.id)))
       throw new HttpException(400, "Id is not number");
-    const findMessage = await this.historyMessage.findUnique({
-      where: { id: Number(params.id) },
+
+    const findMessage = await this.historyMessage.findFirst({
+      where: { id: Number(params.id), deleted_at: null },
     });
+
     if (!findMessage) throw new HttpException(409, "Message dosent exist");
     return findMessage;
   }
@@ -63,8 +66,8 @@ class WhatsappService {
     if (isEmpty(messageData))
       throw new HttpException(400, "message data is empty");
 
-    const findMessage = await this.historyMessage.findUnique({
-      where: { id },
+    const findMessage = await this.historyMessage.findFirst({
+      where: { id, deleted_at: null },
     });
 
     if (!findMessage) throw new HttpException(409, "Message dosent exist");
@@ -97,14 +100,32 @@ class WhatsappService {
     });
   }
 
+  public async deleteMessage(
+    params: DeleteMessageWADto,
+  ): Promise<HistoryMessageWA> {
+    if (isNaN(Number(params.id)))
+      throw new HttpException(400, "Id is not number");
+
+    const findMessage = await this.historyMessage.findFirst({
+      where: { id: Number(params.id), deleted_at: null },
+    });
+
+    if (!findMessage) throw new HttpException(409, "Message dosent exist");
+
+    return this.historyMessage.update({
+      where: { id: findMessage.id },
+      data: { deleted_at: new Date() },
+    });
+  }
+
   public async sendMessage(
     params: SendMessageWADto,
   ): Promise<HistoryMessageWA> {
     if (isNaN(Number(params.id)))
       throw new HttpException(400, "Id is not number");
 
-    const findMessage = await this.historyMessage.findUnique({
-      where: { id: Number(params.id) },
+    const findMessage = await this.historyMessage.findFirst({
+      where: { id: Number(params.id), deleted_at: null },
     });
 
     if (!findMessage) throw new HttpException(409, "Message dosent exist");
@@ -138,7 +159,7 @@ class WhatsappService {
       // SAVE TO DB
       return await this.historyMessage.update({
         where: { id: findMessage.id },
-        data: { status: true },
+        data: { status: true, sent_at: new Date() },
       });
     } catch (error) {
       throw new HttpException(500, "Whatsapp is not running");

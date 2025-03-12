@@ -24,9 +24,14 @@ export class GetSingleMessageWADto {
   public id: string;
 }
 
+export class DeleteMessageWADto {
+  @IsString()
+  public id: string;
+}
+
 export class EditMessageWADto {
   @IsString()
-  public message: string;
+  public id: string;
 }
 
 export class SendMessageWADto {

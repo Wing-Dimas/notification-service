@@ -13,6 +13,7 @@ function App() {
     if (authUser) {
       getStatusWA();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authUser]);
 
   return (

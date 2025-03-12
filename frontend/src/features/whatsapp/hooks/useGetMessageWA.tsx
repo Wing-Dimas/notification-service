@@ -45,7 +45,11 @@ const useGetMessageWA = () => {
     }
   };
 
-  return { loading, getMessageWA };
+  const refetch = async () => {
+    getMessageWA();
+  };
+
+  return { loading, getMessageWA, refetch };
 };
 
 export default useGetMessageWA;

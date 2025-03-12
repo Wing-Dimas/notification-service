@@ -1,16 +1,16 @@
 import { useState } from "react";
 import api from "../../../api";
 
-const useSendMessageWA = () => {
+const useDeleteMessageWA = () => {
   const [loading, setLoading] = useState(false);
   const [isError, setIsError] = useState(false);
 
-  const sendMessageWA = async (id: number) => {
+  const deleteMessageWA = async (id: number) => {
     setLoading(true);
     setIsError(false);
 
     try {
-      await api.post(`/whatsapp/message/${id}/send-message`);
+      await api.delete(`/whatsapp/message/${id}`);
     } catch (error) {
       if (error) {
         throw new Error((error as { message: string; code: number })?.message || "occured error");
@@ -21,7 +21,7 @@ const useSendMessageWA = () => {
     }
   };
 
-  return { isError, loading, sendMessageWA };
+  return { isError, loading, deleteMessageWA };
 };
 
-export default useSendMessageWA;
+export default useDeleteMessageWA;

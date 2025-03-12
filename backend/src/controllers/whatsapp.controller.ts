@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import WhatsappService from "@/services/whatsapp.service";
 import {
+  DeleteMessageWADto,
   GetMessageWADto,
   GetSingleMessageWADto,
   SendMessageWADto,
@@ -55,6 +56,22 @@ class WhatsappController {
         messageData,
         file,
       );
+
+      res.status(200).json({ message: "success", status: 200, data: message });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  public deleteMessage = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
+    try {
+      const params: DeleteMessageWADto = req.params as any;
+
+      const message = await this.whatsappService.deleteMessage(params);
 
       res.status(200).json({ message: "success", status: 200, data: message });
     } catch (error) {

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { HiOutlineArrowPath, HiOutlineDocument, HiOutlinePencilSquare, HiOutlineTrash } from "react-icons/hi2";
-import { formatDate } from "../../../libs/utils";
+import { formatDate, formatTime } from "../../../libs/utils";
 import { HistoryMessageWA } from "../../../types/whatsapp";
 import PayloadRendered from "../../../components/PayloadRendered";
 import Modal from "../../../components/Modal";
@@ -8,6 +8,8 @@ import EditMessage from "./EditMessage";
 import { Link } from "react-router-dom";
 import useSendMessageWA from "../hooks/useSendMessageWA";
 import toast from "react-hot-toast";
+import useDeleteMessageWA from "../hooks/useDeleteMessageWA";
+import useGetMessageWA from "../hooks/useGetMessageWA";
 
 interface RenderMessageProps {
   message: HistoryMessageWA;
@@ -15,7 +17,9 @@ interface RenderMessageProps {
 
 const RenderMessage: React.FC<RenderMessageProps> = ({ message }) => {
   // STATE
+  const { refetch } = useGetMessageWA();
   const { sendMessageWA } = useSendMessageWA();
+  const { deleteMessageWA } = useDeleteMessageWA();
 
   // MODAL
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -23,12 +27,25 @@ const RenderMessage: React.FC<RenderMessageProps> = ({ message }) => {
   const [isSendModalOpen, setIsSendModalOpen] = useState(false);
 
   const onSendMessage = async () => {
-    toast.promise(sendMessageWA(message.id), {
+    setIsSendModalOpen(false);
+    await toast.promise(sendMessageWA(message.id), {
       loading: "Sedang mengirim pesan",
-      success: "Berhasil mengirim pesan",
+      success: () => {
+        refetch();
+        return "Berhasil mengirim pesan";
+      },
       error: (err) => err.message,
     });
-    setIsSendModalOpen(false);
+  };
+
+  const onDeleteMessage = async () => {
+    setIsDeleteModalOpen(false);
+    await toast.promise(deleteMessageWA(message.id), {
+      loading: "Sedang menghapus pesan",
+      success: "Berhasil menghapus pesan",
+      error: (err) => err.message,
+    });
+    refetch();
   };
 
   return (
@@ -43,7 +60,10 @@ const RenderMessage: React.FC<RenderMessageProps> = ({ message }) => {
           <div className="badge text-xs bg-red-200 text-red-800">Failed</div>
         )}
       </td>
-      <td className="whitespace-nowrap text-sm">{formatDate(message.created_at)}</td>
+      <td className="whitespace-nowrap text-sm">
+        <p className="text-base">{formatDate(message.sent_at)}</p>
+        <p className="text-xs">{formatTime(message.sent_at)}</p>
+      </td>
       <td>
         {message.file_path ? (
           <div className="tooltip tooltip-top" data-tip="Lihat File">
@@ -70,7 +90,7 @@ const RenderMessage: React.FC<RenderMessageProps> = ({ message }) => {
             onClose={() => setIsDeleteModalOpen(false)}
             isOpen={isDeleteModalOpen}
             onlyQuestion
-            onConfirm={() => {}}
+            onConfirm={onDeleteMessage}
             confirmButtonStyle="btn-error"
             onCancel={() => setIsDeleteModalOpen(false)}
             withHeader={false}
