@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import Layout from "../../../components/layouts/Layout";
 import useListenQrcode from "../hooks/useListenQrcode";
 import RuleTemplate from "../components/RuleTemplate";
@@ -7,7 +7,6 @@ import { useSessionWA } from "../../../zustand/useSessionWA";
 const ScanPage: React.FC = () => {
   const { status } = useSessionWA();
   const { qrcode } = useListenQrcode();
-  const [loading, setLoading] = useState(true);
 
   return (
     <Layout>
