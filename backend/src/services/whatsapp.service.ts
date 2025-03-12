@@ -1,6 +1,5 @@
 import {
   DeleteMessageWADto,
-  EditMessageWADto,
   GetMessageWADto,
   GetSingleMessageWADto,
   SendMessageWADto,

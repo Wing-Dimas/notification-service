@@ -2,7 +2,6 @@ import { NextFunction, Request, Response } from "express";
 import WhatsappService from "@/services/whatsapp.service";
 import {
   DeleteMessageWADto,
-  EditMessageWADto,
   GetMessageWADto,
   GetSingleMessageWADto,
   SendMessageWADto,

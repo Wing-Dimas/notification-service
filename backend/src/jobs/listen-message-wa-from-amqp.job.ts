@@ -31,38 +31,41 @@ export default class ListenMessageWAFromAMQP {
 
     if (!session?.user?.id || session?.isStop) return;
 
-    // GET CONNECTION FRMO AMQP
+    // GET CONNECTION FROM AMQP
     const { connection, channel } = await getAMQPConnection(
       this.virtualHostName,
     );
-
     // GET MESSAGE FROM QUEUE
     const msg = await channel.get(this.queueName);
 
-    try {
-      if (!msg) {
-        if (NODE_ENV === "development") {
-          logger.info("No more messages in the queue. Exiting...");
-        }
-        return;
+    if (!msg) {
+      if (NODE_ENV === "development") {
+        logger.debug("No more messages in the queue. Exiting...");
       }
+      return;
+    }
 
-      //   SAVE MESSAGE TO DB
-      const historyMessageData = await db.historyMessageWA.create({
-        data: {
-          payload: msg.content.toString(),
-          status: false,
-        },
-      });
+    //   SAVE MESSAGE TO DB
+    const historyMessageData = await db.historyMessageWA.create({
+      data: {
+        payload: msg.content.toString(),
+        status: false,
+      },
+    });
 
-      if (!historyMessageData) return;
-      //   REMOVE MESSAGE FROM QUEUE
-      channel.ack(msg);
+    if (!historyMessageData) return;
 
+    //   REMOVE MESSAGE FROM QUEUE
+    channel.ack(msg);
+
+    try {
       //   VALIDATE CONTENT
       const isValidContent = this.validateContent(msg);
 
-      if (!isValidContent) return;
+      if (!isValidContent) {
+        await this.client.sendText("Terdapat pesan yang gagal dikirim");
+        return;
+      }
 
       //   PARSING CONTENT
       const content = JSON.parse(msg.content.toString()) as Content;
@@ -74,7 +77,6 @@ export default class ListenMessageWAFromAMQP {
       //  params msg
       if (!content.data) {
         // WITHOUT DOCUMENT
-        // SEND MESSAGE
         sent = await this.client.sendText(message);
 
         // SAVE TO DB
@@ -82,6 +84,7 @@ export default class ListenMessageWAFromAMQP {
           where: { id: historyMessageData.id },
           data: {
             payload: msg.content.toString(),
+            sent_at: new Date(),
             status: true,
           },
         });
@@ -121,6 +124,7 @@ export default class ListenMessageWAFromAMQP {
             file_path: `/uploads/wa/${newFilename}`,
             filename: content.filename,
             mime_type: mimeType,
+            sent_at: new Date(),
           },
         });
       }

@@ -1,5 +1,4 @@
-import { Transform } from "class-transformer";
-import { IsNumber, IsOptional, IsString } from "class-validator";
+import { IsOptional, IsString } from "class-validator";
 
 export class GetMessageWADto {
   @IsString()
