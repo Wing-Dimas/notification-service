@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { User } from "@prisma/client";
-import { CreateUserDto, LoginUserDto } from "@dtos/users.dto";
+import { CreateUserDto, LoginUserDto, RefreshTokenDto } from "@dtos/users.dto";
 import { RequestWithUser } from "@interfaces/auth.interface";
 import AuthService from "@services/auth.service";
 import UserService from "@/services/users.service";
@@ -44,11 +44,9 @@ class AuthController {
   ): Promise<void> => {
     try {
       const userData: LoginUserDto = req.body;
-      const { cookie, findUser, accessToken } = await this.authService.login(
-        userData,
-      );
+      const { findUser, accessToken, refreshToken } =
+        await this.authService.login(userData);
 
-      res.setHeader("Set-Cookie", [cookie]);
       res.status(200).json({
         message: "login",
         status: 200,
@@ -57,6 +55,7 @@ class AuthController {
           username: findUser.username,
           email: findUser.email,
           access_token: accessToken.token,
+          refresh_token: refreshToken.token,
         },
       });
     } catch (error) {
@@ -86,10 +85,8 @@ class AuthController {
     next: NextFunction,
   ): Promise<void> => {
     try {
-      console.log(req);
-      console.log(req.cookies["Authorization"]);
-      const refreshToken = req.cookies["Authorization"];
-      const newAccessToken = await this.authService.getNewToken(refreshToken);
+      const { token }: RefreshTokenDto = req.body;
+      const newAccessToken = await this.authService.getNewToken(token);
       res.status(200).json({
         message: "new access token",
         status: 200,

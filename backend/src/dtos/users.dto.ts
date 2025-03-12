@@ -32,3 +32,8 @@ export class LoginUserDto {
   @IsString()
   public password: string;
 }
+
+export class RefreshTokenDto {
+  @IsString()
+  public token: string;
+}

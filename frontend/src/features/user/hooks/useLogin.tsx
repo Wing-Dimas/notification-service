@@ -9,13 +9,14 @@ const useLogin = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const login = async ({ email, password }: { email: string; password: string }) => {
+  const login = async (creds: { email: string; password: string }) => {
     setLoading(true);
     try {
-      const res = await api.post("/login", { email, password });
+      const res = await api.post("/login", creds);
 
       // local storage
       localStorage.setItem("token", res.data.access_token);
+      localStorage.setItem("refresh_token", res.data.refresh_token);
       localStorage.setItem("user", JSON.stringify(res.data));
 
       setAuthUser(res.data);

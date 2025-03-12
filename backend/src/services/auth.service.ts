@@ -38,9 +38,11 @@ class AuthService {
     return createUserData;
   }
 
-  public async login(
-    userData: LoginUserDto,
-  ): Promise<{ cookie: string; findUser: User; accessToken: TokenData }> {
+  public async login(userData: LoginUserDto): Promise<{
+    findUser: User;
+    accessToken: TokenData;
+    refreshToken: TokenData;
+  }> {
     if (isEmpty(userData)) throw new HttpException(400, "userData is empty");
 
     const findUser: User = await this.users.findUnique({
@@ -63,10 +65,7 @@ class AuthService {
     const accessToken = createJWTAccessToken(findUser);
     const refreshToken = createJWTRefreshToken(findUser);
 
-    // const tokenData = this.createAccesToken(findUser);
-    const cookie = this.createCookie(refreshToken);
-
-    return { cookie, findUser, accessToken };
+    return { findUser, accessToken, refreshToken };
   }
 
   public async logout(userData: User): Promise<User> {
@@ -84,24 +83,20 @@ class AuthService {
     return `Authorization=Bearer ${tokenData.token}; HttpOnly; Max-Age=${tokenData.expiresIn}; SameSite=none;`;
   }
 
-  public async getNewToken(refreshToken: string | null): Promise<TokenData> {
-    if (refreshToken) {
-      const token = refreshToken.split(" ")[1];
-      const decodedToken = validateJWTRefreshToken(
-        token,
-      ) as DataStoredInRefreshToken;
-      if (decodedToken) {
-        const findUser: User = await this.users.findUnique({
-          where: { email: decodedToken.user_email },
-        });
-        const newAccessToken = createJWTAccessToken(findUser);
+  public async getNewToken(refreshToken: string): Promise<TokenData> {
+    const token = refreshToken.split(" ")[1];
+    const decodedToken = validateJWTRefreshToken(
+      token,
+    ) as DataStoredInRefreshToken;
+    if (decodedToken) {
+      const findUser: User = await this.users.findUnique({
+        where: { email: decodedToken.user_email },
+      });
+      const newAccessToken = createJWTAccessToken(findUser);
 
-        return newAccessToken;
-      } else {
-        throw new HttpException(401, "Refresh Token expired");
-      }
+      return newAccessToken;
     } else {
-      throw new HttpException(400, "Missing Refresh token");
+      throw new HttpException(401, "Refresh Token expired");
     }
   }
 }

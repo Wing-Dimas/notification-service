@@ -30,8 +30,10 @@ api.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        // const refreshToken = localStorage.getItem("refreshToken");
-        const response = await axios.post("/refresh-token");
+        const refreshToken = localStorage.getItem("refresh_token");
+        const response = await axios.post("/refresh-token", {
+          token: `Bearer ${refreshToken}`,
+        });
         const { access_token } = response.data.data;
 
         localStorage.setItem("token", access_token);
@@ -45,12 +47,7 @@ api.interceptors.response.use(
         localStorage.removeItem("token");
         localStorage.removeItem("user");
         toast.error("Session expired");
-        new Response("", {
-          status: 302,
-          headers: {
-            Location: "/",
-          },
-        });
+        window.location.href = "/";
       }
     }
 

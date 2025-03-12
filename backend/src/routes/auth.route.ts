@@ -1,6 +1,6 @@
 import { Router } from "express";
 import AuthController from "@controllers/auth.controller";
-import { CreateUserDto, LoginUserDto } from "@dtos/users.dto";
+import { CreateUserDto, LoginUserDto, RefreshTokenDto } from "@dtos/users.dto";
 import { Routes } from "@interfaces/routes.interface";
 import authMiddleware from "@middlewares/auth.middleware";
 import validationMiddleware from "@middlewares/validation.middleware";
@@ -36,6 +36,7 @@ class AuthRoute implements Routes {
     // GENERATE TOKEN
     this.router.post(
       `${this.path}/refresh-token`,
+      validationMiddleware(RefreshTokenDto, "body"),
       this.authController.getNewToken,
     );
   }

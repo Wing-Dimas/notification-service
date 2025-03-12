@@ -16,6 +16,7 @@ const useLogout = () => {
       await api.post("/logout");
       // local storage
       localStorage.removeItem("token");
+      localStorage.removeItem("refresh_token");
       localStorage.removeItem("user");
 
       setAuthUser(null);
