@@ -60,7 +60,7 @@ class WhatsappService {
 
   public async editMessage(
     id: number,
-    messageData: EditMessageWADto,
+    messageData: string,
     file?: Express.Multer.File,
   ): Promise<HistoryMessageWA> {
     if (isEmpty(messageData))
@@ -76,7 +76,7 @@ class WhatsappService {
     const isJson = validateJson(payload);
 
     const updatedPayload = isJson ? JSON.parse(findMessage.payload) : {};
-    updatedPayload.message = messageData.message;
+    updatedPayload.message = messageData;
     updatedPayload.data = null;
 
     const data: any = {
@@ -130,7 +130,7 @@ class WhatsappService {
 
     if (!findMessage) throw new HttpException(409, "Message dosent exist");
 
-    if (!this.validatePayload(findMessage.payload))
+    if (!this.validatePayload(findMessage))
       throw new HttpException(400, "Fix payload before sending");
 
     const payload = JSON.parse(findMessage.payload) as Content;
@@ -166,13 +166,15 @@ class WhatsappService {
     }
   }
 
-  public validatePayload(payload: string): boolean {
+  public validatePayload(findMessage: HistoryMessageWA): boolean {
     try {
+      const payload = findMessage.payload;
+
       if (!validateJson(payload)) return false;
 
       const content = JSON.parse(payload) as Content;
 
-      if ("data" in content) {
+      if (findMessage.filename) {
         return "filename" in content && isValidExt(content.filename);
       }
 

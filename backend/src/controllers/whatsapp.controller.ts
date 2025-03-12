@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import WhatsappService from "@/services/whatsapp.service";
 import {
   DeleteMessageWADto,
+  EditMessageWADto,
   GetMessageWADto,
   GetSingleMessageWADto,
   SendMessageWADto,
@@ -47,7 +48,7 @@ class WhatsappController {
     next: NextFunction,
   ): Promise<void> => {
     try {
-      const messageData = req.body;
+      const messageData = req.body.message as string;
       const id = Number(req.params.id);
       const file = req.file;
 
