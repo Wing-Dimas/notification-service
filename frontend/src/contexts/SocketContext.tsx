@@ -49,6 +49,7 @@ export const SocketContexProvider = ({ children }: SocketContexProviderProps) =>
     return () => {
       if (socket) socket.close();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authUser]);
 
   return <SocketContex.Provider value={{ socket, isConnected }}>{children}</SocketContex.Provider>;
