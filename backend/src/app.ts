@@ -12,6 +12,7 @@ import { logger, stream } from "@utils/logger";
 import { app, server } from "@/libs/socket";
 import { ConnectionSession } from "./libs/whatsapp";
 import Schedule from "@jobs/index";
+import path from "path";
 
 class App {
   public app: express.Application;
@@ -29,6 +30,7 @@ class App {
     this.initializeErrorHandling();
     this.initializeWhatsapp();
     this.initializeScheduler();
+    this.initializeWebApp();
   }
 
   public listen() {
@@ -81,6 +83,18 @@ class App {
     this.app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(specs));
   }
 
+  private initializeWebApp() {
+    // frontend must be built first
+    if (NODE_ENV === "production") {
+      this.app.use(express.static(path.join(__dirname, "../../frontend/dist")));
+      this.app.get("*", (req, res) => {
+        return res.sendFile(
+          path.join(__dirname, "../../frontend/dist", "index.html"),
+        );
+      });
+    }
+  }
+
   private initializeErrorHandling() {
     this.app.use(errorMiddleware);
   }
@@ -90,7 +104,6 @@ class App {
   }
 
   private initializeScheduler() {
-    // TODO: implement scheduler
     Schedule.run();
   }
 }

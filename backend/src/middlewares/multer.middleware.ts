@@ -1,4 +1,4 @@
-import multer, { FileFilterCallback, Multer, MulterError } from "multer";
+import multer, { FileFilterCallback } from "multer";
 import fs from "fs";
 import {
   ACCEPTED_IMAGE_TYPES,
@@ -6,7 +6,7 @@ import {
   ACCEPTED_VIDEO_TYPES,
 } from "@/constants/valid-file-uploads";
 import { HttpException } from "@/exceptions/HttpException";
-import { Request, Response } from "express";
+import { Request } from "express";
 
 const ALLOWED_MIME_TYPE = [
   ...ACCEPTED_DOCUMENT_TYPES,

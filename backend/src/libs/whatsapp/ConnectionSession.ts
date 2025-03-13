@@ -13,7 +13,7 @@ import { Boom } from "@hapi/boom";
 import qrcode from "qrcode";
 import fs from "fs";
 
-import { SESSION_PATH } from "@/config";
+import { NODE_ENV, SESSION_PATH } from "@/config";
 import { color, sleep } from "@/utils/utils";
 import { socket } from "@libs/socket";
 import SessionDB from "./SessionDB";
@@ -264,7 +264,9 @@ class ConnectionSession extends SessionDB {
         );
 
         sessions = { ...sessions, isStop: false };
-        // sendFirstMessage(version, isLatest);
+        if (NODE_ENV === "production") {
+          sendFirstMessage(version, isLatest);
+        }
       }
     });
 
