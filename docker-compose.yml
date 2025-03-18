@@ -1,0 +1,64 @@
+name: "mern-app"
+
+services:
+  app:
+    container_name: app
+    build:
+      context: .
+      dockerfile: DockerFile
+    depends_on:
+      - db
+      - rabbitmq
+    restart: unless-stopped
+    env_file: ./backend/.env
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: mysql://root:root@db:3306/notif-dev
+      AMQP_URL: amqp://guest:guest@rabbitmq:5672
+    ports:
+      - "3001:3000"
+    volumes:
+      # - session:/app/backend/session
+      - uploads:/app/backend/uploads
+    networks:
+      - mern-network
+
+  db:
+    image: mysql:latest
+    container_name: db-notif
+    ports:
+      - "3316:3306"
+    environment:
+      - MYSQL_DATABASE=notif-dev
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=root
+    networks:
+      - mern-network
+    volumes:
+      # Specify an absolute path mapping
+      - mysql-data:/var/lib/mysql
+
+  rabbitmq:
+    image: rabbitmq:management
+    container_name: rabbitmq
+    volumes:
+      - ~/.docker-conf/rabbitmq/data/:/var/lib/rabbitmq/
+      - ~/.docker-conf/rabbitmq/log/:/var/log/rabbitmq
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+    ports:
+      - "5671:5672"
+      - "15671:15672"
+    networks:
+      - mern-network
+
+networks:
+  mern-network:
+    driver: bridge
+
+volumes:
+  mysql-data:
+  uploads:
+  # session:

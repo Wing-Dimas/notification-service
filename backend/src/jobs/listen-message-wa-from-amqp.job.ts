@@ -8,6 +8,7 @@ import {
   getFileCategory,
   getMimeTypeFromName,
   isValidExt,
+  sleep,
 } from "@/utils/utils";
 import { proto } from "@whiskeysockets/baileys";
 import { GetMessage } from "amqplib";
@@ -35,6 +36,10 @@ export default class ListenMessageWAFromAMQP {
     const { connection, channel } = await getAMQPConnection(
       this.virtualHostName,
     );
+
+    // If the settings in AMQP are empty or there is an error then return
+    if (!connection || !channel) return;
+
     // GET MESSAGE FROM QUEUE
     const msg = await channel.get(this.queueName);
 
@@ -74,6 +79,8 @@ export default class ListenMessageWAFromAMQP {
 
       let sent: proto.IWebMessageInfo;
 
+      // delay random 1 - 20 seconds
+      await sleep(Math.floor(Math.random() * (20000 - 1000 + 1)) + 1000);
       //  params msg
       if (!content.data) {
         // WITHOUT DOCUMENT

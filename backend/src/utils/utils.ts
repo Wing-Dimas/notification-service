@@ -7,6 +7,7 @@ import {
   ACCEPTED_IMAGE_TYPES,
   ACCEPTED_VIDEO_TYPES,
 } from "@/constants/valid-file-uploads";
+import { logger } from "./logger";
 
 export type UnionTypeWithString<T extends string> = T | Omit<string, T>;
 
@@ -17,8 +18,9 @@ export const getAMQPConnection = async (virtualHost: string) => {
 
     return { connection, channel };
   } catch (error) {
-    throw new Error(error);
+    logger.error(error);
   }
+  return { connection: null, channel: null };
 };
 
 /**
