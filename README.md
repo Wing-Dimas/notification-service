@@ -42,6 +42,12 @@ Buat file `.env` dan tambahkan konfigurasi berikut:
 cp .env.template .env
 ```
 
+Jalankan perintah:
+
+```env
+cp .env.template .env
+```
+
 Jalankan server backend:
 
 ```sh
@@ -103,6 +109,12 @@ root/
 │   │   ├── routes/
 │   │   ├── types/
 │   │   ├── zustand/
+```
+
+## Docker Push
+
+```bash
+
 ```
 
 ## Kontributor

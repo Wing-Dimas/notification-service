@@ -28,7 +28,7 @@ class SessionDB {
   public async deleteSessionDB(session_name: string) {
     const session = await this.findSession(session_name);
     if (session) {
-      this.sessions.delete({ where: { session_name: session_name } });
+      await this.sessions.delete({ where: { session_name: session_name } });
     }
   }
 

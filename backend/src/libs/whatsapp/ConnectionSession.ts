@@ -189,7 +189,10 @@ class ConnectionSession extends SessionDB {
                 "#E6B0AA",
               ),
             );
-            socket.emit("session-status", { session_name, status: "STOPPED" });
+            socket.emit("session-status", {
+              session_name,
+              status: "STOPPED",
+            });
           }
         } else if (reason === DisconnectReason.connectionLost) {
           console.log(
@@ -201,6 +204,7 @@ class ConnectionSession extends SessionDB {
           );
           this.createSession(session_name);
         } else if (reason === DisconnectReason.connectionReplaced) {
+          await this.deleteSession(session_name);
           console.log(
             color("[SYS]", "#EB6112"),
             color(
@@ -209,11 +213,12 @@ class ConnectionSession extends SessionDB {
             ),
           );
           client.logout();
-          return socket.emit("connection-status", {
+          socket.emit("connection-status", {
             session_name,
             result: `[Session: ${session_name}] Connection Replaced, Another New Session Opened, Please Create QR Again`,
           });
         } else if (reason === DisconnectReason.loggedOut) {
+          await this.deleteSession(session_name);
           console.log(
             color("[SYS]", "#EB6112"),
             color(
@@ -222,7 +227,7 @@ class ConnectionSession extends SessionDB {
             ),
           );
           client.logout();
-          return socket.emit("connection-status", {
+          socket.emit("connection-status", {
             session_name,
             result: `[Session: ${session_name}] Device Logged Out, Please Create QR Again`,
           });

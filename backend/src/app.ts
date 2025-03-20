@@ -54,7 +54,18 @@ class App {
         credentials: true,
       }),
     );
-    this.app.use(helmet());
+    this.app.use(
+      helmet({
+        contentSecurityPolicy: {
+          directives: {
+            defaultSrc: ["'self'"],
+            imgSrc: ["'self'", "data:"], // Mengizinkan data URI untuk gambar
+            styleSrc: ["'self'", "'unsafe-inline'"], // Izinkan inline styles
+            connecSrc: ["'self'", "*"],
+          },
+        },
+      }),
+    );
     this.app.use(express.json());
     this.app.use(express.urlencoded({ extended: true }));
     this.app.use(cookieParser());

@@ -133,6 +133,7 @@ dist
 session_auth_info
 session/session_1
 session/store/*.json
+/session/session_1
 
 # upluoder
 uploads

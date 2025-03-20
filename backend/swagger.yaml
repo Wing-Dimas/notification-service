@@ -107,18 +107,135 @@ paths:
           description: "Server Error"
 
   # [POST] message
-  /send-message:
+  /api/signup:
     post:
-      tags:
-        - message
-      summary: Send Message
+      summary: User Signup
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                username:
+                  type: string
+                password:
+                  type: string
+      responses:
+        "201":
+          description: User created successfully
+
+  /api/login:
+    post:
+      summary: User Login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        "200":
+          description: Login successful
+
+  /api/refresh-token:
+    post:
+      summary: Refresh Token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+      responses:
+        "200":
+          description: Token refreshed
+
+  /api/whatsapp/message/{id}/send-message:
+    post:
+      summary: Send a WhatsApp message
       parameters:
-        - name: body
-          in: body
-          description: message Data
+        - name: id
+          in: path
           required: true
           schema:
-            $ref: "#/definitions/users"
+            type: integer
+      responses:
+        "200":
+          description: Message sent successfully
+
+  /api/whatsapp/message:
+    get:
+      summary: Get all WhatsApp messages
+      parameters:
+        - name: order_by
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of messages
+
+  /api/whatsapp/message/{id}:
+    get:
+      summary: Get a specific WhatsApp message
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Message details
+
+    delete:
+      summary: Delete a WhatsApp message
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Message deleted
+
+  /api/whatsapp/message/{id}/edit:
+    put:
+      summary: Edit a WhatsApp message
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                file:
+                  type: string
+                  format: binary
+      responses:
+        "200":
+          description: Message updated
+
 # definitions
 definitions:
   users:

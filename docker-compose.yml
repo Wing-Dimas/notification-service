@@ -5,7 +5,7 @@ services:
     container_name: app
     build:
       context: .
-      dockerfile: DockerFile
+      dockerfile: dockerfile
     depends_on:
       - db
       - rabbitmq
@@ -19,7 +19,7 @@ services:
     ports:
       - "3001:3000"
     volumes:
-      # - session:/app/backend/session
+      - session:/app/backend/session
       - uploads:/app/backend/uploads
     networks:
       - mern-network
@@ -61,4 +61,4 @@ networks:
 volumes:
   mysql-data:
   uploads:
-  # session:
+  session:

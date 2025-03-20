@@ -1,5 +1,3 @@
-import { AMQP_URL } from "@/config";
-import { connect } from "amqplib";
 import mime from "mime-types";
 import chalk from "chalk";
 import {
@@ -7,21 +5,8 @@ import {
   ACCEPTED_IMAGE_TYPES,
   ACCEPTED_VIDEO_TYPES,
 } from "@/constants/valid-file-uploads";
-import { logger } from "./logger";
 
 export type UnionTypeWithString<T extends string> = T | Omit<string, T>;
-
-export const getAMQPConnection = async (virtualHost: string) => {
-  try {
-    const connection = await connect(AMQP_URL + virtualHost);
-    const channel = await connection.createChannel();
-
-    return { connection, channel };
-  } catch (error) {
-    logger.error(error);
-  }
-  return { connection: null, channel: null };
-};
 
 /**
  * @method isEmpty

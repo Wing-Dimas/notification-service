@@ -1,12 +1,10 @@
 # compiled output
 .vscode
 /node_modules
-# /session/session_1
-/session
+/session/session_1
 /uploads
 /dist
 /src/logs
-/src/prisma/migrations
 
 # code formatter
 .eslintrc

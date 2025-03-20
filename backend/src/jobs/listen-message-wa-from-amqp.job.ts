@@ -1,10 +1,10 @@
 import { NODE_ENV } from "@/config";
 import { Content } from "@/interfaces/amqp.interface";
+import AMQPClient from "@/libs/amqp-client";
 import { db } from "@/libs/db";
 import { ConnectionSession, Client } from "@/libs/whatsapp";
 import { logger } from "@/utils/logger";
 import {
-  getAMQPConnection,
   getFileCategory,
   getMimeTypeFromName,
   isValidExt,
@@ -29,41 +29,33 @@ export default class ListenMessageWAFromAMQP {
   public async handler() {
     // CEK SESSION UP
     const session = new ConnectionSession().getClient();
-
     if (!session?.user?.id || session?.isStop) return;
 
-    // GET CONNECTION FROM AMQP
-    const { connection, channel } = await getAMQPConnection(
-      this.virtualHostName,
-    );
-
-    // If the settings in AMQP are empty or there is an error then return
-    if (!connection || !channel) return;
-
-    // GET MESSAGE FROM QUEUE
-    const msg = await channel.get(this.queueName);
-
-    if (!msg) {
-      if (NODE_ENV === "development") {
-        logger.debug("No more messages in the queue. Exiting...");
-      }
-      return;
-    }
-
-    //   SAVE MESSAGE TO DB
-    const historyMessageData = await db.historyMessageWA.create({
-      data: {
-        payload: msg.content.toString(),
-        status: false,
-      },
-    });
-
-    if (!historyMessageData) return;
-
-    //   REMOVE MESSAGE FROM QUEUE
-    channel.ack(msg);
+    const amqpClient = new AMQPClient(this.virtualHostName);
 
     try {
+      await amqpClient.connect();
+      const msg = await amqpClient.getMessage(this.queueName);
+
+      if (!msg) {
+        if (NODE_ENV === "development") {
+          logger.debug("No more messages in the queue. Exiting...");
+        }
+        return;
+      }
+
+      //   SAVE MESSAGE TO DB
+      const historyMessageData = await db.historyMessageWA.create({
+        data: {
+          payload: msg.content.toString(),
+          status: false,
+        },
+      });
+
+      if (!historyMessageData) return;
+
+      //   REMOVE MESSAGE FROM QUEUE
+      amqpClient.ack(msg);
       //   VALIDATE CONTENT
       const isValidContent = this.validateContent(msg);
 
@@ -136,13 +128,12 @@ export default class ListenMessageWAFromAMQP {
         });
       }
 
-      logger.debug(sent);
+      logger.info(sent);
     } catch (error) {
       logger.error(error);
     } finally {
       // CLOSE CONNECTION
-      await channel.close();
-      await connection.close();
+      await amqpClient.close();
     }
   }
 
