@@ -12,6 +12,7 @@ FROM node:20-alpine AS backend
 WORKDIR /app/backend
 RUN apk add --no-cache libc6-compat openssl
 COPY backend/package*.json ./
+# ENV SHARP_IGNORE_GLOBAL_LIBVIPS=1
 RUN npm ci
 COPY backend ./
 RUN npm run build
@@ -20,12 +21,15 @@ RUN npx prisma generate
 # IMAGE FINAL
 FROM node:20-alpine AS production
 RUN apk add --no-cache libc6-compat openssl
+
 WORKDIR /app
 # Copy backend build
 COPY --from=backend /app/backend/dist ./backend/dist
 COPY --from=backend /app/backend/package*.json ./backend/
 COPY --from=backend /app/backend/.env ./backend/
-COPY --from=backend /app/backend/src/prisma/schema.prisma ./backend/src/prisma/schema.prisma
+COPY --from=backend /app/backend/src/prisma/ ./backend/src/prisma/
+COPY --from=backend /app/backend/localhost.crt ./backend/localhost.crt
+COPY --from=backend /app/backend/localhost.key ./backend/localhost.key
 # copy frontend build
 COPY --from=frontend /app/frontend/dist ./frontend/dist
 COPY --from=frontend /app/frontend/package*.json ./frontend
@@ -33,6 +37,8 @@ COPY --from=frontend /app/frontend/package*.json ./frontend
 # Install production dependencies
 WORKDIR /app/backend
 ENV NODE_ENV=production
+RUN apk add curl
+# ENV SHARP_IGNORE_GLOBAL_LIBVIPS=1
 RUN npm ci --only=production && npm cache clean --force
 RUN npx prisma generate
 
