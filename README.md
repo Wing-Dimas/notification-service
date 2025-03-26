@@ -111,10 +111,18 @@ root/
 │   │   ├── zustand/
 ```
 
-## Docker Push
+## Docker
 
-```bash
+build compose
 
+```sh
+docker build -t registry.mojokertokab.go.id/silverwing/notification-service .
+```
+
+push ke gitlab
+
+```sh
+docker push registry.mojokertokab.go.id/silverwing/notification-service
 ```
 
 ## Kontributor
