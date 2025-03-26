@@ -1,6 +1,6 @@
 import { SESSION_NAME } from "@/config";
 import { HttpException } from "@/exceptions/HttpException";
-import ConnectionSession from "@/libs/whatsapp/ConnectionSession";
+import ConnectionSession from "@/libs/whatsapp/connection-session";
 import fs from "fs";
 
 class SessionService extends ConnectionSession {

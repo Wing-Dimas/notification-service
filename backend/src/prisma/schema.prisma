@@ -2,40 +2,63 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 datasource db {
-    provider = "mysql"
-    url      = env("DATABASE_URL")
+  provider = "mysql"
+  url      = env("DATABASE_URL")
 }
 
 generator client {
-    provider = "prisma-client-js"
-    // binaryTargets = ["native", "darwin-arm64", "linux-musl-arm64-openssl-3.0.x"]
+  provider = "prisma-client-js"
+  // binaryTargets = ["native", "darwin-arm64", "linux-musl-arm64-openssl-3.0.x"]
+}
+
+enum NotificationType {
+  WHATSAPP
+  EMAIL
+  SMS
 }
 
 model User {
-    id         Int      @id @default(autoincrement())
-    username   String   @unique
-    email      String   @unique
-    password   String
-    created_at DateTime @default(now())
-    updated_at DateTime @updatedAt
+  id         Int      @id @default(autoincrement())
+  username   String   @unique
+  email      String   @unique
+  password   String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@map("users")
 }
 
-model HistoryMessageWA {
-    id         Int       @id @default(autoincrement())
-    payload    String    @db.LongText()
-    status     Boolean
-    filename   String?
-    mime_type  String?
-    file_path  String?
-    created_at DateTime  @default(now())
-    updated_at DateTime  @updatedAt
-    sent_at    DateTime?
-    deleted_at DateTime?
+model HistoryMessage {
+  id                Int              @id @default(autoincrement())
+  payload           String           @db.LongText()
+  status            Boolean
+  filename          String?
+  mime_type         String?
+  file_path         String?
+  notification_type NotificationType @default(WHATSAPP)
+  created_at        DateTime         @default(now())
+  updated_at        DateTime         @updatedAt
+  sent_at           DateTime?
+  deleted_at        DateTime?
+
+  @@map("history_messages")
 }
 
 model Session {
-    session_name   String   @id
-    session_number String
-    status         String?
-    created_at     DateTime @default(now())
+  session_name       String   @id
+  session_number     String
+  status             String?
+  send_first_message Boolean  @default(false)
+  created_at         DateTime @default(now())
+
+  @@map("sessions")
+}
+
+model WhatsaapAuthCredentials {
+  id        String   @id
+  value     String   @db.LongText()
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("whatsapp_auth_credentials")
 }

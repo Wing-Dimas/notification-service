@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import SessionService from "@/services/session.services";
+import SessionService from "@/services/session.service";
 
 class SessionController {
   public sessionService = new SessionService();

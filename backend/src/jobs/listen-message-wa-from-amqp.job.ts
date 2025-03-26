@@ -38,14 +38,14 @@ export default class ListenMessageWAFromAMQP {
       const msg = await amqpClient.getMessage(this.queueName);
 
       if (!msg) {
-        if (NODE_ENV === "development") {
-          logger.debug("No more messages in the queue. Exiting...");
-        }
+        if (NODE_ENV === "development")
+          logger.info("No more messages in the queue. Exiting...");
+
         return;
       }
 
       //   SAVE MESSAGE TO DB
-      const historyMessageData = await db.historyMessageWA.create({
+      const historyMessageData = await db.historyMessage.create({
         data: {
           payload: msg.content.toString(),
           status: false,
@@ -79,7 +79,7 @@ export default class ListenMessageWAFromAMQP {
         sent = await this.client.sendText(message);
 
         // SAVE TO DB
-        await db.historyMessageWA.update({
+        await db.historyMessage.update({
           where: { id: historyMessageData.id },
           data: {
             payload: msg.content.toString(),
@@ -115,7 +115,7 @@ export default class ListenMessageWAFromAMQP {
         );
 
         // SAVE TO DB
-        await db.historyMessageWA.update({
+        await db.historyMessage.update({
           where: { id: historyMessageData.id },
           data: {
             payload: JSON.stringify({ ...content, data: null }),

@@ -1,5 +1,5 @@
-import ConnectionSession from "./ConnectionSession";
-import SessionDB from "./SessionDB";
-import Client from "./Client";
+import ConnectionSession from "./connection-session";
+import SessionDB from "./session-db";
+import Client from "./client";
 
 export { ConnectionSession, SessionDB, Client };

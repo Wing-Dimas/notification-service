@@ -5,7 +5,6 @@ import {
   makeInMemoryStore,
   makeWASocket,
   proto,
-  useMultiFileAuthState,
   UserFacingSocketConfig,
   WAVersion,
 } from "@whiskeysockets/baileys";
@@ -16,9 +15,11 @@ import fs from "fs";
 import { NODE_ENV, SESSION_PATH } from "@/config";
 import { color, sleep } from "@/utils/utils";
 import { socket } from "@libs/socket";
-import SessionDB from "./SessionDB";
+import SessionDB from "./session-db";
 import { logDir, logger } from "./logger";
 import { join } from "path";
+import { usePrismaAuthState } from "./use-prisma-auth-state";
+import { db } from "../db";
 
 export type SessionType = {
   isStop: boolean;
@@ -43,11 +44,7 @@ class ConnectionSession extends SessionDB {
   }
 
   public async deleteSession(session_name: string) {
-    if (fs.existsSync(`${this.sessionPath}/${session_name}`))
-      fs.rmSync(`${this.sessionPath}/${session_name}`, {
-        force: true,
-        recursive: true,
-      });
+    await db.$queryRawUnsafe(`TRUNCATE TABLE whatsapp_auth_credentials;`);
     if (fs.existsSync(`${this.sessionPath}/store/${session_name}.json`))
       fs.unlinkSync(`${this.sessionPath}/store/${session_name}.json`);
     if (fs.existsSync(`${this.logPath}/${session_name}.txt`))
@@ -74,19 +71,18 @@ class ConnectionSession extends SessionDB {
   }
 
   public async createSession(session_name: string) {
-    const sessionDir = `${this.sessionPath}/${session_name}`;
     const storePath = `${this.sessionPath}/store/${session_name}.json`;
-    const { state, saveCreds } = await useMultiFileAuthState(sessionDir);
+    const { state, saveCreds } = await usePrismaAuthState();
     const { version, isLatest } = await fetchLatestBaileysVersion();
 
     const options: UserFacingSocketConfig = {
       printQRInTerminal: false,
       auth: state,
       logger: logger,
-      syncFullHistory: false,
-      shouldSyncHistoryMessage: () => false,
-      markOnlineOnConnect: false,
-      browser: Browsers.windows("Chrome"),
+      browser:
+        NODE_ENV === "development"
+          ? Browsers.windows("Chrome")
+          : Browsers.ubuntu("Chrome"),
       version,
     };
 
@@ -112,19 +108,6 @@ class ConnectionSession extends SessionDB {
 
     // If Create Connection
     client.ev.on("connection.update", async update => {
-      //   if (this.count >= 3) {
-      //     this.deleteSession(session_name);
-      //     socket.emit("connection-status", {
-      //       session_name,
-      //       result: "No Response, QR Scan Canceled",
-      //     });
-      //     console.log(`Count : ${this.count}, QR Stopped!`);
-      //     client.ws.close();
-      //     client.logout();
-      //     client.ev.removeAllListeners("connection.update");
-      //     return;
-      //   }
-
       if (update.qr) this.generateQr(update.qr, session_name);
 
       if (update.isNewLogin) {
@@ -261,7 +244,6 @@ class ConnectionSession extends SessionDB {
         socket.emit("session-status", { session_name, status: "CONNECTED" });
         console.log(
           color("[SYS]", "#EB6112"),
-          //   color(moment().format("DD/MM/YY HH:mm:ss"), "#F8C471"),
           color(
             `[Session: ${session_name}] Session is Now Connected - Baileys Version ${version}, isLatest : ${isLatest}`,
             "#82E0AA",
@@ -269,8 +251,16 @@ class ConnectionSession extends SessionDB {
         );
 
         sessions = { ...sessions, isStop: false };
-        if (NODE_ENV === "production") {
-          sendFirstMessage(version, isLatest);
+
+        if (NODE_ENV === "development") {
+          const foundSession = await this.findSessionDB(session_name);
+          if (foundSession?.send_first_message) return;
+          await this.sendFirstMessage(version, isLatest);
+          await this.updateSessionDB(
+            session_name,
+            foundSession.session_number,
+            true,
+          );
         }
       }
     });
@@ -280,57 +270,53 @@ class ConnectionSession extends SessionDB {
         messages.forEach(message => {
           if (!message.key.fromMe) return;
 
-          replyMessage(message);
+          this.replyMessage(message);
         });
       } catch (error) {
         logger.error(error, type);
       }
     });
   }
-}
-
-/**
- * Get the content of a message.
- * @param {proto.IWebMessageInfo} message
- * @returns {string}
- */
-const getMessageContent = (message: proto.IWebMessageInfo) => {
-  try {
-    return (
-      message.message.conversation || message.message.extendedTextMessage?.text
-    );
-  } catch (error) {
-    return "";
-  }
-};
-
-const sendFirstMessage = async (version: WAVersion, isLatest: boolean) => {
-  try {
-    await sessions.sendMessage(sessions.user.id, {
-      text: `Whatsapp BOT is Running - Baileys Version ${version}, isLatest : ${isLatest}
-🧩 enter "PING" to test`,
-    });
-  } catch (error) {
-    console.log(error);
-  }
-};
-
-const replyMessage = async (message: proto.IWebMessageInfo) => {
-  try {
-    const msg = getMessageContent(message);
-
-    if (!msg) return;
-
-    switch (msg.toLowerCase()) {
-      case "ping":
-        await sessions.sendMessage(message.key.remoteJid, {
-          text: "From server: Pong",
-        });
-        break;
+  public getMessageContent(message: proto.IWebMessageInfo) {
+    try {
+      return (
+        message.message.conversation ||
+        message.message.extendedTextMessage?.text
+      );
+    } catch (error) {
+      return "";
     }
-  } catch (error) {
-    console.log(error);
   }
-};
+
+  public async sendFirstMessage(version: WAVersion, isLatest: boolean) {
+    try {
+      await sessions.sendMessage(sessions.user.id, {
+        text: `Whatsapp BOT is Running - Baileys Version ${version}, isLatest : ${isLatest}\n🧩 enter "PING" to test`,
+      });
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  public async replyMessage(message: proto.IWebMessageInfo) {
+    try {
+      const msg = this.getMessageContent(message);
+
+      if (!msg) return;
+
+      const session = this.getClient();
+
+      switch (msg.toLowerCase()) {
+        case "ping":
+          await sessions.sendMessage(session.user.id, {
+            text: "From server: Pong",
+          });
+          break;
+      }
+    } catch (error) {
+      throw error;
+    }
+  }
+}
 
 export default ConnectionSession;

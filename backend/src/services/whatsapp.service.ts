@@ -7,7 +7,6 @@ import {
 import { HttpException } from "@/exceptions/HttpException";
 import { db } from "@/libs/db";
 import { getFileCategory, isValidExt, validateJson } from "@/utils/utils";
-import { HistoryMessageWA, Prisma } from "@prisma/client";
 import { isEmpty } from "class-validator";
 import path, { join } from "path";
 import fs from "fs";
@@ -15,27 +14,32 @@ import { createPaginator, PaginatedResult } from "prisma-pagination";
 import { logger } from "@/utils/logger";
 import { Content } from "@/interfaces/amqp.interface";
 import { Client, ConnectionSession } from "@/libs/whatsapp";
+import { HistoryMessage, Prisma } from "@prisma/client";
 
 class WhatsappService {
-  public historyMessage = db.historyMessageWA;
+  public historyMessage = db.historyMessage;
   public paginator = createPaginator({ perPage: 10 });
 
   public async getMessage(
     query: GetMessageWADto,
-  ): Promise<PaginatedResult<HistoryMessageWA>> {
+  ): Promise<PaginatedResult<HistoryMessage>> {
     const search = query.search?.toLowerCase() || "";
     const page = query.page || 1;
     const order_by = query.order_by || "created_at";
     const sort = query.sort || "desc";
 
     const result = await this.paginator<
-      HistoryMessageWA,
-      Prisma.HistoryMessageWAFindManyArgs
+      HistoryMessage,
+      Prisma.HistoryMessageFindManyArgs
     >(
       this.historyMessage,
       {
         orderBy: { [order_by]: sort },
-        where: { payload: { contains: search }, deleted_at: null },
+        where: {
+          payload: { contains: search },
+          notification_type: "WHATSAPP",
+          deleted_at: null,
+        },
       },
       { page: page },
     );
@@ -45,7 +49,7 @@ class WhatsappService {
 
   public async getSingleMessage(
     params: GetSingleMessageWADto,
-  ): Promise<HistoryMessageWA> {
+  ): Promise<HistoryMessage> {
     if (isNaN(Number(params.id)))
       throw new HttpException(400, "Id is not number");
 
@@ -61,7 +65,7 @@ class WhatsappService {
     id: number,
     messageData: string,
     file?: Express.Multer.File,
-  ): Promise<HistoryMessageWA> {
+  ): Promise<HistoryMessage> {
     if (isEmpty(messageData))
       throw new HttpException(400, "message data is empty");
 
@@ -101,7 +105,7 @@ class WhatsappService {
 
   public async deleteMessage(
     params: DeleteMessageWADto,
-  ): Promise<HistoryMessageWA> {
+  ): Promise<HistoryMessage> {
     if (isNaN(Number(params.id)))
       throw new HttpException(400, "Id is not number");
 
@@ -117,9 +121,7 @@ class WhatsappService {
     });
   }
 
-  public async sendMessage(
-    params: SendMessageWADto,
-  ): Promise<HistoryMessageWA> {
+  public async sendMessage(params: SendMessageWADto): Promise<HistoryMessage> {
     if (isNaN(Number(params.id)))
       throw new HttpException(400, "Id is not number");
 
@@ -165,7 +167,7 @@ class WhatsappService {
     }
   }
 
-  public validatePayload(findMessage: HistoryMessageWA): boolean {
+  public validatePayload(findMessage: HistoryMessage): boolean {
     try {
       const payload = findMessage.payload;
 

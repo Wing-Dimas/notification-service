@@ -17,12 +17,17 @@ class SessionDB {
       console.log(session_name, session_number);
     }
 
-    await db.session.create({
-      data: {
-        session_name: session_name,
-        session_number: session_number,
-      },
-    });
+    const findSession = await this.findSession(session_name);
+    if (findSession) {
+      await this.updateSessionDB(session_name, session_number);
+    } else {
+      await this.sessions.create({
+        data: {
+          session_name: session_name,
+          session_number: session_number,
+        },
+      });
+    }
   }
 
   public async deleteSessionDB(session_name: string) {
@@ -32,12 +37,19 @@ class SessionDB {
     }
   }
 
-  public async updateSessionDB(session_name: string, session_number: string) {
+  public async updateSessionDB(
+    session_name?: string,
+    session_number?: string,
+    send_first_message?: boolean,
+  ) {
     const session = await this.findSession(session_name);
     if (session) {
       await this.sessions.update({
         where: { session_name: session_name },
-        data: { session_number: session_number },
+        data: {
+          session_number: session_number,
+          send_first_message: !!send_first_message,
+        },
       });
     }
   }
