@@ -6,33 +6,35 @@ import {
 } from "@/dtos/whatsapp.dto";
 import { HttpException } from "@/exceptions/HttpException";
 import { db } from "@/libs/db";
-import { getFileCategory, isValidExt, validateJson } from "@/utils/utils";
+import {
+  getFileCategory,
+  isValidExt,
+  phoneNumber,
+  validateJson,
+} from "@/utils/utils";
 import { isEmpty } from "class-validator";
 import path, { join } from "path";
 import fs from "fs";
 import { createPaginator, PaginatedResult } from "prisma-pagination";
-import { logger } from "@/utils/logger";
 import { Content } from "@/interfaces/amqp.interface";
 import { Client, ConnectionSession } from "@/libs/whatsapp";
-import { HistoryMessage, Prisma } from "@prisma/client";
+import { Message, MessageAttachment, Prisma } from "@prisma/client";
+import { logger } from "@/utils/logger";
 
 class WhatsappService {
-  public historyMessage = db.historyMessage;
+  public message = db.message;
   public paginator = createPaginator({ perPage: 10 });
 
   public async getMessage(
     query: GetMessageWADto,
-  ): Promise<PaginatedResult<HistoryMessage>> {
+  ): Promise<PaginatedResult<Message>> {
     const search = query.search?.toLowerCase() || "";
     const page = query.page || 1;
     const order_by = query.order_by || "created_at";
     const sort = query.sort || "desc";
 
-    const result = await this.paginator<
-      HistoryMessage,
-      Prisma.HistoryMessageFindManyArgs
-    >(
-      this.historyMessage,
+    const result = await this.paginator<Message, Prisma.MessageFindManyArgs>(
+      this.message,
       {
         orderBy: { [order_by]: sort },
         where: {
@@ -40,46 +42,54 @@ class WhatsappService {
           notification_type: "WHATSAPP",
           deleted_at: null,
         },
+        include: { message_attachments: true },
       },
       { page: page },
     );
 
-    return result;
+    return result; // parse payload
   }
 
   public async getSingleMessage(
     params: GetSingleMessageWADto,
-  ): Promise<HistoryMessage> {
+  ): Promise<Message> {
     if (isNaN(Number(params.id)))
       throw new HttpException(400, "Id is not number");
 
-    const findMessage = await this.historyMessage.findFirst({
+    const findMessage = await this.message.findFirst({
       where: { id: Number(params.id), deleted_at: null },
+      include: { message_attachments: true },
     });
 
-    if (!findMessage) throw new HttpException(409, "Message dosent exist");
+    if (!findMessage) throw new HttpException(409, "Message doesn't exist");
     return findMessage;
   }
 
   public async editMessage(
     id: number,
-    messageData: string,
+    body: { message: string; receiver: string },
     file?: Express.Multer.File,
-  ): Promise<HistoryMessage> {
-    if (isEmpty(messageData))
+  ): Promise<Message> {
+    if (isEmpty(body.message))
       throw new HttpException(400, "message data is empty");
+    if (isEmpty(body.receiver))
+      throw new HttpException(400, "receiver data is empty");
 
-    const findMessage = await this.historyMessage.findFirst({
+    const findMessage = await this.message.findFirst({
       where: { id, deleted_at: null },
+      include: { message_attachments: true },
     });
 
     if (!findMessage) throw new HttpException(409, "Message dosent exist");
 
     const payload = findMessage.payload;
-    const isJson = validateJson(payload);
+    const isJson = validateJson(payload); // check if payload is json
 
-    const updatedPayload = isJson ? JSON.parse(findMessage.payload) : {};
-    updatedPayload.message = messageData;
+    const receiver = phoneNumber(body.receiver); // parse receiver to phone number
+
+    const updatedPayload = isJson ? JSON.parse(findMessage.payload) : {}; // parse payload to json
+    updatedPayload.message = body.message;
+    updatedPayload.receiver = body.receiver;
     updatedPayload.data = null;
 
     const data: any = {
@@ -87,46 +97,78 @@ class WhatsappService {
     };
 
     if (file) {
-      const tempFile = findMessage.file_path;
-      if (fs.existsSync(tempFile)) fs.unlinkSync(tempFile);
+      // remove temp file if exists
+      const fileName = findMessage.message_attachments[0]?.file_name || "";
+      const tempFile = path.join(__dirname, "../../uploads/wa", fileName);
+      if (fileName && fs.existsSync(tempFile)) fs.unlinkSync(tempFile);
 
       updatedPayload.filename = file.filename;
-      data.file_path = "/" + file.path.split(path.sep).join("/"); // replace "\\" to /
-      data.mime_type = file.mimetype;
-      data.filename = file.filename;
       data.payload = JSON.stringify(updatedPayload);
+
+      const attachmentUpdate = {
+        file_path: "/" + file.path.split(path.sep).join("/"), // replace "\\" to /
+        file_type: file.mimetype,
+        file_name: file.filename,
+      };
+
+      const existingAttachment = findMessage.message_attachments[0];
+
+      // update or insert attachment
+      if (existingAttachment) {
+        return await this.message.update({
+          where: { id },
+          data: {
+            receiver: receiver,
+            payload: data.payload,
+            message_attachments: {
+              update: {
+                where: { id: existingAttachment?.id },
+                data: { ...attachmentUpdate },
+              },
+            },
+          },
+        });
+      } else {
+        return await this.message.update({
+          where: { id },
+          data: {
+            receiver: receiver,
+            payload: data.payload,
+            message_attachments: { create: { ...attachmentUpdate } },
+          },
+        });
+      }
     }
 
-    return await this.historyMessage.update({
+    return await this.message.update({
       where: { id },
-      data: data,
+      data: { receiver: receiver, ...data },
     });
   }
 
-  public async deleteMessage(
-    params: DeleteMessageWADto,
-  ): Promise<HistoryMessage> {
+  public async deleteMessage(params: DeleteMessageWADto): Promise<Message> {
     if (isNaN(Number(params.id)))
       throw new HttpException(400, "Id is not number");
 
-    const findMessage = await this.historyMessage.findFirst({
+    const findMessage = await this.message.findFirst({
       where: { id: Number(params.id), deleted_at: null },
     });
 
     if (!findMessage) throw new HttpException(409, "Message dosent exist");
 
-    return this.historyMessage.update({
+    return this.message.update({
       where: { id: findMessage.id },
       data: { deleted_at: new Date() },
     });
   }
 
-  public async sendMessage(params: SendMessageWADto): Promise<HistoryMessage> {
+  public async sendMessage(params: SendMessageWADto): Promise<Message> {
     if (isNaN(Number(params.id)))
       throw new HttpException(400, "Id is not number");
 
-    const findMessage = await this.historyMessage.findFirst({
+    const findMessage = await this.message.findFirst({
       where: { id: Number(params.id), deleted_at: null },
+      include: { message_attachments: true },
     });
 
     if (!findMessage) throw new HttpException(409, "Message dosent exist");
@@ -137,53 +179,55 @@ class WhatsappService {
     const payload = JSON.parse(findMessage.payload) as Content;
 
     try {
-      const client = new Client(new ConnectionSession().getClient());
+      const receiver = phoneNumber(payload.receiver);
+      const client = new Client(new ConnectionSession().getClient(), receiver);
 
       // WITHOUT DOCUMENT
-      if (!findMessage.file_path) {
+      if (!findMessage.message_attachments[0]) {
         await client.sendText(payload.message);
       } else {
         // WITH DOCUMENT
         const message = payload.message;
-        const { file_path, mime_type, filename } = findMessage;
-        const extCategory = getFileCategory(mime_type);
+        const { file_path, file_type, file_name } =
+          findMessage.message_attachments[0];
+        const extCategory = getFileCategory(file_type);
         const fullpath = join(__dirname, "../../", file_path);
 
         await client.sendMedia(
           fullpath,
-          filename,
-          mime_type,
+          file_name,
+          file_type,
           message,
           extCategory,
         );
       }
       // SAVE TO DB
-      return await this.historyMessage.update({
+      return await this.message.update({
         where: { id: findMessage.id },
         data: { status: true, sent_at: new Date() },
       });
     } catch (error) {
+      logger.error("Error sending message", error);
       throw new HttpException(500, "Whatsapp is not running");
     }
   }
 
-  public validatePayload(findMessage: HistoryMessage): boolean {
-    try {
-      const payload = findMessage.payload;
+  public validatePayload(
+    findMessage: Message & { message_attachments: MessageAttachment[] },
+  ): boolean {
+    const payload = findMessage.payload;
 
-      if (!validateJson(payload)) return false;
+    if (!validateJson(payload)) return false;
 
-      const content = JSON.parse(payload) as Content;
+    const content = JSON.parse(payload) as Content;
 
-      if (findMessage.filename) {
-        return "filename" in content && isValidExt(content.filename);
-      }
-
-      return "message" in content;
-    } catch (error) {
-      logger.error(Error);
-      return false;
-    }
+    return (
+      "receiver" in content &&
+      ("message" in content ||
+        (findMessage.message_attachments[0] &&
+          "filename" in content &&
+          isValidExt(content.filename)))
+    );
   }
 }
 

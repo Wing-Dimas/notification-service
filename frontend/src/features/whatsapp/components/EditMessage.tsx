@@ -1,8 +1,11 @@
 import React from "react";
-import { HistoryMessageWA } from "../../../types/whatsapp";
+import { IMessageWA } from "../../../types/whatsapp";
 import PayloadRendered from "../../../components/PayloadRendered";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { editMessageFormSchema, EditMessageFormSchema } from "../form/edit-message";
+import {
+  editMessageFormSchema,
+  EditMessageFormSchema,
+} from "../form/edit-message";
 import { getFileCategory, validateJson } from "../../../libs/utils";
 import ErrorText from "../../../components/input/ErrorText";
 import { useForm } from "react-hook-form";
@@ -14,7 +17,7 @@ import toast from "react-hot-toast";
 import useGetMessageWA from "../hooks/useGetMessageWA";
 
 interface EditMessageProps {
-  message: HistoryMessageWA;
+  message: IMessageWA;
   onClose: () => void;
 }
 
@@ -35,6 +38,7 @@ const EditMessage: React.FC<EditMessageProps> = ({ message, onClose }) => {
     resolver: zodResolver(editMessageFormSchema),
     defaultValues: {
       message: isJson ? parsedPayload.message : message.payload,
+      receiver: message.receiver?.replace("@s.whatsapp.net", ""),
       file: undefined,
     },
   });
@@ -45,6 +49,7 @@ const EditMessage: React.FC<EditMessageProps> = ({ message, onClose }) => {
     // Membuat objek FormData untuk pengiriman data
     const formData = new FormData();
     formData.append("message", data.message);
+    formData.append("receiver", data.receiver);
     // Memeriksa apakah file ada sebelum menambahkannya ke FormData
     if (data.file && data.file.length > 0) {
       const file = data.file[0];
@@ -53,12 +58,12 @@ const EditMessage: React.FC<EditMessageProps> = ({ message, onClose }) => {
     onClose();
 
     await toast.promise(editMessageWA(message.id, formData), {
-      loading: "Meyimpan...",
+      loading: "Menyimpan...",
       success: () => {
         refetch();
         return "Sukses memperbaruhi data";
       },
-      error: (err) => err.message,
+      error: err => err.message,
     });
   };
 
@@ -72,24 +77,58 @@ const EditMessage: React.FC<EditMessageProps> = ({ message, onClose }) => {
     <div>
       <div className="mb-8 bg-base-200 p-2">
         <p className="font-bold mb-2">Payload</p>
-        <PayloadRendered payload={message.payload} className="max-w-full w-full" />
+        <PayloadRendered
+          payload={message.payload}
+          className="max-w-full w-full"
+        />
       </div>
 
       <h2 className="font-semibold">Perbaiki Data</h2>
 
       <form onSubmit={handleSubmit(onSubmit)}>
+        {/* INPUT MESSAGE */}
         <div className="mb-4">
-          <TextAreaInput type="message" containerStyle="mt-4" labelTitle="Message" {...register("message")} />
-          {!!errors.message?.message && <ErrorText className="mt-2">{errors.message?.message}</ErrorText>}
+          <TextAreaInput
+            type="text"
+            containerStyle="mt-4"
+            labelTitle="Message"
+            {...register("message")}
+          />
+          {!!errors.message?.message && (
+            <ErrorText className="mt-2">{errors.message?.message}</ErrorText>
+          )}
         </div>
+        {/* END INPUT MESSAGE */}
+        {/* INPUT RECEIVER */}
         <div className="mb-4">
-          <InputFile containerStyle="mt-4" labelTitle="File (opsional)" {...register("file")} />
-          {!!errors.file?.message && <ErrorText className="mt-2">{errors.file?.message}</ErrorText>}
+          <TextAreaInput
+            type="text"
+            containerStyle="mt-4"
+            labelTitle="Nomor Penerima"
+            {...register("receiver")}
+          />
+          {!!errors.receiver?.message && (
+            <ErrorText className="mt-2">{errors.receiver?.message}</ErrorText>
+          )}
+        </div>
+        {/* END INPUT RECEIVER */}
+        {/* INPUT FILE */}
+        <div className="mb-4">
+          <InputFile
+            containerStyle="mt-4"
+            labelTitle="File (opsional)"
+            {...register("file")}
+          />
+          {!!errors.file?.message && (
+            <ErrorText className="mt-2">{errors.file?.message}</ErrorText>
+          )}
           <div className="mt-2">
             <p className="text-xs">Format yang didukung:</p>
             <p className="text-xs">• Gambar: JPG, PNG, GIF, WebP, SVG</p>
             <p className="text-xs">• Video: MP4, WebM, OGG, MOV, AVI, MKV</p>
-            <p className="text-xs">• Dokumen: PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, TXT, RTF, ZIP</p>
+            <p className="text-xs">
+              • Dokumen: PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, TXT, RTF, ZIP
+            </p>
           </div>
           {selectedFile && (
             <>
@@ -97,9 +136,12 @@ const EditMessage: React.FC<EditMessageProps> = ({ message, onClose }) => {
                 <h4 className="font-medium">Informasi File:</h4>
                 <p className="text-sm">Nama: {selectedFile.name}</p>
                 <p className="text-sm">
-                  Tipe: {getFileCategory(selectedFile.type)} ({selectedFile.type || "Tidak terdeteksi"})
+                  Tipe: {getFileCategory(selectedFile.type)} (
+                  {selectedFile.type || "Tidak terdeteksi"})
                 </p>
-                <p className="text-sm">Ukuran: {formatFileSize(selectedFile.size)}</p>
+                <p className="text-sm">
+                  Ukuran: {formatFileSize(selectedFile.size)}
+                </p>
               </div>
 
               <div className="mt-2 p-3">
@@ -109,10 +151,17 @@ const EditMessage: React.FC<EditMessageProps> = ({ message, onClose }) => {
             </>
           )}
         </div>
+        {/* END INPUT FILE */}
 
-        <button type="submit" className="btn mt-2 w-full btn-primary" disabled={loading}>
+        <button
+          type="submit"
+          className="btn mt-2 w-full btn-primary"
+          disabled={loading}
+        >
           Save
-          {loading && <span className="loading loading-spinner loading-xs"></span>}
+          {loading && (
+            <span className="loading loading-spinner loading-xs"></span>
+          )}
         </button>
       </form>
     </div>

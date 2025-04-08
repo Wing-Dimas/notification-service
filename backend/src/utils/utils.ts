@@ -32,6 +32,18 @@ export const isEmpty = (value: string | number | object): boolean => {
   }
 };
 
+export const phoneNumber = (number: string) => {
+  if (number.endsWith("@s.whatsapp.net")) return number;
+
+  const phone = number.replace(/\D/g, "");
+  if (phone.startsWith("08")) {
+    const slice = phone.slice(1);
+    return `62${slice}@s.whatsapp.net`;
+  } else {
+    return phone + "@s.whatsapp.net";
+  }
+};
+
 export const sleep = async (ms: number) => {
   return new Promise(resolve => setTimeout(resolve, ms));
 };

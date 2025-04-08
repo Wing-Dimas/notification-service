@@ -1,7 +1,12 @@
 import React, { useState } from "react";
-import { HiOutlineArrowPath, HiOutlineDocument, HiOutlinePencilSquare, HiOutlineTrash } from "react-icons/hi2";
+import {
+  HiOutlineArrowPath,
+  HiOutlineDocument,
+  HiOutlinePencilSquare,
+  HiOutlineTrash,
+} from "react-icons/hi2";
 import { formatDate, formatTime } from "../../../libs/utils";
-import { HistoryMessageWA } from "../../../types/whatsapp";
+import { IMessageWA } from "../../../types/whatsapp";
 import PayloadRendered from "../../../components/PayloadRendered";
 import Modal from "../../../components/Modal";
 import EditMessage from "./EditMessage";
@@ -12,7 +17,7 @@ import useDeleteMessageWA from "../hooks/useDeleteMessageWA";
 import useGetMessageWA from "../hooks/useGetMessageWA";
 
 interface RenderMessageProps {
-  message: HistoryMessageWA;
+  message: IMessageWA;
 }
 
 const RenderMessage: React.FC<RenderMessageProps> = ({ message }) => {
@@ -34,7 +39,7 @@ const RenderMessage: React.FC<RenderMessageProps> = ({ message }) => {
         refetch();
         return "Berhasil mengirim pesan";
       },
-      error: (err) => err.message,
+      error: err => err.message,
     });
   };
 
@@ -43,7 +48,7 @@ const RenderMessage: React.FC<RenderMessageProps> = ({ message }) => {
     await toast.promise(deleteMessageWA(message.id), {
       loading: "Sedang menghapus pesan",
       success: "Berhasil menghapus pesan",
-      error: (err) => err.message,
+      error: err => err.message,
     });
     refetch();
   };
@@ -55,7 +60,9 @@ const RenderMessage: React.FC<RenderMessageProps> = ({ message }) => {
       </td>
       <td>
         {message.status ? (
-          <div className="badge text-xs bg-green-200 text-green-800">Success</div>
+          <div className="badge text-xs bg-green-200 text-green-800">
+            Success
+          </div>
         ) : (
           <div className="badge text-xs bg-red-200 text-red-800">Failed</div>
         )}
@@ -65,9 +72,16 @@ const RenderMessage: React.FC<RenderMessageProps> = ({ message }) => {
         <p className="text-xs">{formatTime(message.sent_at)}</p>
       </td>
       <td>
-        {message.file_path ? (
+        {message.message_attachments?.[0]?.file_path ? (
           <div className="tooltip tooltip-top" data-tip="Lihat File">
-            <Link to={import.meta.env.VITE_BACKEND_URL + message.file_path} target="_blank" className="btn btn-sm">
+            <Link
+              to={
+                import.meta.env.VITE_BACKEND_URL +
+                message.message_attachments[0].file_path
+              }
+              target="_blank"
+              className="btn btn-sm"
+            >
               <HiOutlineDocument />
             </Link>
           </div>
@@ -76,11 +90,21 @@ const RenderMessage: React.FC<RenderMessageProps> = ({ message }) => {
       <td>
         <div className="flex gap-2">
           {/* EDIT BUTTON */}
-          <Modal onClose={() => setIsEditModalOpen(false)} isOpen={isEditModalOpen} title="Edit Data">
-            <EditMessage message={message} onClose={() => setIsEditModalOpen(false)} />
+          <Modal
+            onClose={() => setIsEditModalOpen(false)}
+            isOpen={isEditModalOpen}
+            title="Edit Data"
+          >
+            <EditMessage
+              message={message}
+              onClose={() => setIsEditModalOpen(false)}
+            />
           </Modal>
           <div className="tooltip tooltip-top" data-tip="Edit Data">
-            <button className="btn btn-sm btn-warning" onClick={() => setIsEditModalOpen(true)}>
+            <button
+              className="btn btn-sm btn-warning"
+              onClick={() => setIsEditModalOpen(true)}
+            >
               <HiOutlinePencilSquare />
             </button>
           </div>
@@ -97,7 +121,10 @@ const RenderMessage: React.FC<RenderMessageProps> = ({ message }) => {
             containerStyle="max-w-md"
           />
           <div className="tooltip tooltip-top" data-tip="Hapus">
-            <button className="btn btn-sm btn-error text-white" onClick={() => setIsDeleteModalOpen(true)}>
+            <button
+              className="btn btn-sm btn-error text-white"
+              onClick={() => setIsDeleteModalOpen(true)}
+            >
               <HiOutlineTrash />
             </button>
           </div>
@@ -115,7 +142,10 @@ const RenderMessage: React.FC<RenderMessageProps> = ({ message }) => {
             questionText="Apakah anda yakin ingin mengirim ulang message ini ke whatsapp?"
           />
           <div className="tooltip tooltip-top" data-tip="Kirim Ulang">
-            <button className="btn btn-sm btn-info text-white" onClick={() => setIsSendModalOpen(true)}>
+            <button
+              className="btn btn-sm btn-info text-white"
+              onClick={() => setIsSendModalOpen(true)}
+            >
               <HiOutlineArrowPath />
             </button>
           </div>

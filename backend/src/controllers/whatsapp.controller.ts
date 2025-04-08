@@ -47,15 +47,11 @@ class WhatsappController {
     next: NextFunction,
   ): Promise<void> => {
     try {
-      const messageData = req.body.message as string;
+      const body = req.body as { message: string; receiver: string };
       const id = Number(req.params.id);
       const file = req.file;
 
-      const message = await this.whatsappService.editMessage(
-        id,
-        messageData,
-        file,
-      );
+      const message = await this.whatsappService.editMessage(id, body, file);
 
       res.status(200).json({ message: "success", status: 200, data: message });
     } catch (error) {

@@ -1,4 +1,5 @@
 export interface Content extends Object {
+  receiver?: string | null;
   message?: string | null;
   data?: string | null;
   filename?: string | null;

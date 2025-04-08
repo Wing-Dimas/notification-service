@@ -2,6 +2,7 @@ import {
   Browsers,
   DisconnectReason,
   fetchLatestBaileysVersion,
+  isJidBroadcast,
   makeInMemoryStore,
   makeWASocket,
   proto,
@@ -79,6 +80,7 @@ class ConnectionSession extends SessionDB {
       printQRInTerminal: false,
       auth: state,
       logger: logger,
+      shouldIgnoreJid: jid => isJidBroadcast(jid),
       browser:
         NODE_ENV === "development"
           ? Browsers.windows("Chrome")

@@ -28,22 +28,6 @@ model User {
   @@map("users")
 }
 
-model HistoryMessage {
-  id                Int              @id @default(autoincrement())
-  payload           String           @db.LongText()
-  status            Boolean
-  filename          String?
-  mime_type         String?
-  file_path         String?
-  notification_type NotificationType @default(WHATSAPP)
-  created_at        DateTime         @default(now())
-  updated_at        DateTime         @updatedAt
-  sent_at           DateTime?
-  deleted_at        DateTime?
-
-  @@map("history_messages")
-}
-
 model Session {
   session_name       String   @id
   session_number     String
@@ -61,4 +45,34 @@ model WhatsaapAuthCredentials {
   updatedAt DateTime @updatedAt
 
   @@map("whatsapp_auth_credentials")
+}
+
+model Message {
+  id                Int              @id @default(autoincrement())
+  payload           String           @db.LongText()
+  status            Boolean
+  notification_type NotificationType @default(WHATSAPP)
+  sender            String?
+  receiver          String?
+  created_at        DateTime         @default(now())
+  updated_at        DateTime         @updatedAt
+  sent_at           DateTime?
+  deleted_at        DateTime?
+
+  message_attachments MessageAttachment[]
+
+  @@map("messages")
+}
+
+model MessageAttachment {
+  id         Int     @id @default(autoincrement())
+  message_id Int
+  file_name  String  @db.VarChar(255)
+  file_path  String  @db.VarChar(500)
+  file_type  String? @db.VarChar(100)
+  file_size  BigInt?
+
+  message Message @relation(fields: [message_id], references: [id], onDelete: Cascade)
+
+  @@map("message_attachments")
 }

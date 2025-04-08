@@ -9,9 +9,13 @@ type SessionType = {
 class Client {
   private client: SessionType;
   private from: string;
-  constructor(client: SessionType) {
+  constructor(client: SessionType, target = null) {
     this.client = client;
-    this.from = client?.user?.id || null;
+    this.from = target || null;
+  }
+
+  setTarget(target: string) {
+    this.from = target;
   }
 
   async sendText(text: string) {

@@ -3,11 +3,13 @@ import { Content } from "@/interfaces/amqp.interface";
 import AMQPClient from "@/libs/amqp-client";
 import { db } from "@/libs/db";
 import { ConnectionSession, Client } from "@/libs/whatsapp";
+import { SessionType } from "@/libs/whatsapp/connection-session";
 import { logger } from "@/utils/logger";
 import {
   getFileCategory,
   getMimeTypeFromName,
   isValidExt,
+  phoneNumber,
   sleep,
 } from "@/utils/utils";
 import { proto } from "@whiskeysockets/baileys";
@@ -20,16 +22,17 @@ export default class ListenMessageWAFromAMQP {
   private readonly queueName = "whatsapp";
   private readonly virtualHostName = "/";
   private client: Client;
+  private session: SessionType;
 
   constructor() {
-    this.client = new Client(new ConnectionSession().getClient());
+    this.session = new ConnectionSession().getClient();
+    this.client = new Client(this.session, this.session?.user?.id);
     this.handler();
   }
 
   public async handler() {
     // CEK SESSION UP
-    const session = new ConnectionSession().getClient();
-    if (!session?.user?.id || session?.isStop) return;
+    if (!this.session?.user?.id || this.session?.isStop) return;
 
     const amqpClient = new AMQPClient(this.virtualHostName);
 
@@ -40,19 +43,18 @@ export default class ListenMessageWAFromAMQP {
       if (!msg) {
         if (NODE_ENV === "development")
           logger.info("No more messages in the queue. Exiting...");
-
         return;
       }
 
       //   SAVE MESSAGE TO DB
-      const historyMessageData = await db.historyMessage.create({
+      const messageData = await db.message.create({
         data: {
           payload: msg.content.toString(),
           status: false,
         },
       });
 
-      if (!historyMessageData) return;
+      if (!messageData) return;
 
       //   REMOVE MESSAGE FROM QUEUE
       amqpClient.ack(msg);
@@ -69,6 +71,10 @@ export default class ListenMessageWAFromAMQP {
 
       const message = content.message ?? "";
 
+      const receiver = phoneNumber(content.receiver);
+
+      this.client.setTarget(receiver);
+
       let sent: proto.IWebMessageInfo;
 
       // delay random 1 - 20 seconds
@@ -79,9 +85,11 @@ export default class ListenMessageWAFromAMQP {
         sent = await this.client.sendText(message);
 
         // SAVE TO DB
-        await db.historyMessage.update({
-          where: { id: historyMessageData.id },
+        await db.message.update({
+          where: { id: messageData.id },
           data: {
+            sender: this.session.user.id,
+            receiver: receiver,
             payload: msg.content.toString(),
             sent_at: new Date(),
             status: true,
@@ -115,15 +123,22 @@ export default class ListenMessageWAFromAMQP {
         );
 
         // SAVE TO DB
-        await db.historyMessage.update({
-          where: { id: historyMessageData.id },
+        await db.message.update({
+          where: { id: messageData.id },
           data: {
             payload: JSON.stringify({ ...content, data: null }),
+            sender: this.session.user.id,
+            receiver: receiver,
             status: true,
-            file_path: `/uploads/wa/${newFilename}`,
-            filename: content.filename,
-            mime_type: mimeType,
             sent_at: new Date(),
+            message_attachments: {
+              create: {
+                file_name: content.filename,
+                file_path: `/uploads/wa/${newFilename}`, // path
+                file_type: mimeType,
+                file_size: fs.statSync(filePath).size,
+              },
+            },
           },
         });
       }
@@ -138,17 +153,14 @@ export default class ListenMessageWAFromAMQP {
   }
 
   public validateContent(msg: GetMessage): boolean {
-    try {
-      const content = JSON.parse(msg.content.toString()) as Content;
+    const content = JSON.parse(msg.content.toString()) as Content;
 
-      if ("data" in content) {
-        return "filename" in content && isValidExt(content.filename);
-      }
-
-      return "message" in content;
-    } catch (error) {
-      logger.error(Error);
-      return false;
-    }
+    return (
+      "receiver" in content &&
+      ("message" in content ||
+        ("data" in content &&
+          "filename" in content &&
+          isValidExt(content.filename)))
+    );
   }
 }
