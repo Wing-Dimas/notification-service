@@ -1,5 +1,5 @@
 import React from "react";
-import { IMessageWA } from "../../../types/whatsapp";
+import { IMessage } from "../../../types/message";
 import PayloadRendered from "../../../components/PayloadRendered";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -17,7 +17,7 @@ import toast from "react-hot-toast";
 import useGetMessageWA from "../hooks/useGetMessageWA";
 
 interface EditMessageProps {
-  message: IMessageWA;
+  message: IMessage;
   onClose: () => void;
 }
 

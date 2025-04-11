@@ -14,12 +14,12 @@ const Sidebar: React.FC = () => {
         aria-label="close sidebar"
         className="drawer-overlay"
       ></label>
-      <aside className="bg-base-100 min-h-screen w-80">
+      <aside className="bg-base-100 min-h-screen w-64">
         <div className="bg-base-100 sticky top-0 z-20 items-center gap-2 bg-opacity-90 px-4 py-2 backdrop-blur flex ">
           <div className="w-8 h-8 bg-primary rounded-lg flex justify-center items-center">
             <HiMiniSquares2X2 className="w-4 h-4 text-white" />
           </div>
-          <span className="text-xl font-bold">Notification Services</span>
+          <span className="text-lg font-bold">Notification Services</span>
         </div>
         <div className="h-4"></div>
         <ul className="menu px-4 py-0">

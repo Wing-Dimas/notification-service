@@ -1,9 +1,9 @@
 import { create } from "zustand";
 import { PaginatedResult } from "../types/paginator";
-import { IMessageWA } from "../types/whatsapp";
+import { IMessage } from "../types/message";
 
-export type DataType = IMessageWA[];
-export type PaginatorType = PaginatedResult<IMessageWA>["meta"];
+export type DataType = IMessage[];
+export type PaginatorType = PaginatedResult<IMessage>["meta"];
 
 interface IWhatsapp {
   data: DataType;

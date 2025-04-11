@@ -1,7 +1,11 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { nanoid } from "nanoid";
-import { ACCEPTED_DOCUMENT_TYPES, ACCEPTED_IMAGE_TYPES, ACCEPTED_VIDEO_TYPES } from "../constants/valid-file-upload";
+import {
+  ACCEPTED_DOCUMENT_TYPES,
+  ACCEPTED_IMAGE_TYPES,
+  ACCEPTED_VIDEO_TYPES,
+} from "../constants/valid-file-upload";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -12,21 +16,32 @@ export function randomKey() {
 }
 
 export async function delay(ms: number = 3000) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-export function formatDate(dateInput: string = "") {
+export function formatDate(dateInput: string | Date = "") {
   if (dateInput === "" || dateInput === null) return "";
 
-  const date = new Date(dateInput);
-  const formatter = new Intl.DateTimeFormat("id-ID", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
-  const formattedDate = formatter.format(date);
-  return formattedDate;
+  if (typeof dateInput === "string") {
+    const date = new Date(dateInput);
+    const formatter = new Intl.DateTimeFormat("id-ID", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+    const formattedDate = formatter.format(date);
+    return formattedDate;
+  } else if (dateInput instanceof Date) {
+    const formatter = new Intl.DateTimeFormat("id-ID", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+    const formattedDate = formatter.format(dateInput);
+    return formattedDate;
+  }
 }
 
 export function formatTime(dateInput: string = "") {
@@ -44,6 +59,15 @@ export function formatTime(dateInput: string = "") {
   const formattedTime = formatter.format(date);
   return formattedTime;
 }
+export const formatCompactNumber = (num: number) => {
+  if (num >= 1000000) {
+    return (num / 1000000).toFixed(1).replace(/\.0$/, "") + "M";
+  }
+  if (num >= 1000) {
+    return (num / 1000).toFixed(1).replace(/\.0$/, "") + "k";
+  }
+  return num;
+};
 
 export function validateJson(data: string) {
   if (typeof data === "string") {
@@ -75,11 +99,14 @@ export const getFileExtension = (fileType: string): string => {
     "video/x-matroska": ".mkv",
     "application/pdf": ".pdf",
     "application/msword": ".doc",
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document": ".docx",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+      ".docx",
     "application/vnd.ms-excel": ".xls",
-    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": ".xlsx",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
+      ".xlsx",
     "application/vnd.ms-powerpoint": ".ppt",
-    "application/vnd.openxmlformats-officedocument.presentationml.presentation": ".pptx",
+    "application/vnd.openxmlformats-officedocument.presentationml.presentation":
+      ".pptx",
     "text/plain": ".txt",
     "application/rtf": ".rtf",
     "application/zip": ".zip",

@@ -6,7 +6,7 @@ import {
   HiOutlineTrash,
 } from "react-icons/hi2";
 import { formatDate, formatTime } from "../../../libs/utils";
-import { IMessageWA } from "../../../types/whatsapp";
+import { IMessage } from "../../../types/message";
 import PayloadRendered from "../../../components/PayloadRendered";
 import Modal from "../../../components/Modal";
 import EditMessage from "./EditMessage";
@@ -17,7 +17,7 @@ import useDeleteMessageWA from "../hooks/useDeleteMessageWA";
 import useGetMessageWA from "../hooks/useGetMessageWA";
 
 interface RenderMessageProps {
-  message: IMessageWA;
+  message: IMessage;
 }
 
 const RenderMessage: React.FC<RenderMessageProps> = ({ message }) => {
@@ -68,8 +68,8 @@ const RenderMessage: React.FC<RenderMessageProps> = ({ message }) => {
         )}
       </td>
       <td className="whitespace-nowrap text-sm">
-        <p className="text-base">{formatDate(message.sent_at)}</p>
-        <p className="text-xs">{formatTime(message.sent_at)}</p>
+        <p className="text-base">{formatDate(message.sent_at || "")}</p>
+        <p className="text-xs">{formatTime(message.sent_at || "")}</p>
       </td>
       <td>
         {message.message_attachments?.[0]?.file_path ? (
