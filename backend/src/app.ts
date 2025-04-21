@@ -13,7 +13,7 @@ import { app, server } from "@/libs/socket";
 import { ConnectionSession } from "./libs/whatsapp";
 import Schedule from "@jobs/index";
 import path from "path";
-import { telegramBotClient } from "./libs/telegram/telegram-client";
+import TelegramBotClient from "./libs/telegram/telegram-client";
 
 class App {
   public app: express.Application;
@@ -110,14 +110,28 @@ class App {
 
   private initializeTelegramBot() {
     // Initialize your Telegram bot here
-    // Set up webhook if in production
+    TelegramBotClient.init({
+      token: process.env.TELEGRAM_BOT_TOKEN || "",
+      polling: NODE_ENV !== "production",
+      // Set up webhook if in production
+      webhook:
+        NODE_ENV === "production"
+          ? {
+              url: process.env.WEBHOOK_URL || "",
+              port: Number(process.env.WEBHOOK_PORT) || 443,
+              path: "/webhook",
+            }
+          : undefined,
+    });
+
     if (NODE_ENV === "production") {
       // Use middleware for webhook
-      this.app.use(telegramBotClient.getWebhookMiddleware("/webhook"));
+      this.app.use(
+        TelegramBotClient.getInstance().getWebhookMiddleware("/webhook"),
+      );
     }
 
-    telegramBotClient
-      .getBotInfo()
+    TelegramBotClient.getBotInfo()
       .then(botInfo => {
         logger.info(`Telegram Bot is running as ${botInfo.username}`);
       })
