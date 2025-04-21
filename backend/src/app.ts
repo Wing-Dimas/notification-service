@@ -13,6 +13,7 @@ import { app, server } from "@/libs/socket";
 import { ConnectionSession } from "./libs/whatsapp";
 import Schedule from "@jobs/index";
 import path from "path";
+import { telegramBotClient } from "./libs/telegram/telegram-client";
 
 class App {
   public app: express.Application;
@@ -28,7 +29,8 @@ class App {
     this.initializeRoutes(routes);
     this.initializeSwagger();
     this.initializeErrorHandling();
-    this.initializeWhatsapp();
+    // this.initializeWhatsapp();
+    this.initializeTelegramBot();
     this.initializeScheduler();
     this.initializeWebApp();
   }
@@ -104,6 +106,24 @@ class App {
         );
       });
     }
+  }
+
+  private initializeTelegramBot() {
+    // Initialize your Telegram bot here
+    // Set up webhook if in production
+    if (NODE_ENV === "production") {
+      // Use middleware for webhook
+      this.app.use(telegramBotClient.getWebhookMiddleware("/webhook"));
+    }
+
+    telegramBotClient
+      .getBotInfo()
+      .then(botInfo => {
+        logger.info(`Telegram Bot is running as ${botInfo.username}`);
+      })
+      .catch(error => {
+        logger.error("Failed to get bot info:", error);
+      });
   }
 
   private initializeErrorHandling() {

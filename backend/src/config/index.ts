@@ -14,4 +14,5 @@ export const {
   SESSION_PATH,
   LOG_PATH_WHATSAPP,
   AMQP_URL,
+  TELEGRAM_BOT_TOKEN,
 } = process.env;

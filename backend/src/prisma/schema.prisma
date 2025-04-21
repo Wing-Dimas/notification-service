@@ -47,6 +47,18 @@ model WhatsaapAuthCredentials {
   @@map("whatsapp_auth_credentials")
 }
 
+model telegramUser {
+  id         String   @id
+  chat_id    String   @unique
+  username   String?  @unique
+  first_name String?
+  last_name  String?
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@map("telegram_users")
+}
+
 model Message {
   id                Int              @id @default(autoincrement())
   payload           String           @db.LongText()
