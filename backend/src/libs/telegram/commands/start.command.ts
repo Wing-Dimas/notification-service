@@ -1,6 +1,7 @@
 import { logger } from "@/utils/logger";
 import { CommandHandler, MessageContext } from "../types";
 import TelegramBot from "node-telegram-bot-api";
+import { db } from "@/libs/db";
 
 export const startCommand: CommandHandler = {
   command: "start",
@@ -41,5 +42,29 @@ Username: ${user.username || "tidak ada"}
 
     // Log new user
     logger.info(`New user: ${user.first_name} (ID: ${user.id})`);
+
+    try {
+      await db.telegramUser.upsert({
+        where: { chat_id: user.id },
+        create: {
+          chat_id: user.id,
+          username: user.username,
+          first_name: user.first_name,
+          last_name: user.last_name,
+        },
+        update: {
+          username: user.username || null,
+          first_name: user.first_name,
+          last_name: user.last_name || null,
+        },
+      });
+      logger.info(
+        `User ${user.first_name} (ID: ${user.id}) has been created or updated.`,
+      );
+    } catch (error) {
+      logger.error(
+        `Failed to create or update user ${user.first_name} (ID: ${user.id}): ${error.message}`,
+      );
+    }
   },
 };

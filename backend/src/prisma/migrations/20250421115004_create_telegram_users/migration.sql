@@ -1,7 +1,7 @@
 -- CreateTable
 CREATE TABLE `telegram_users` (
-    `id` VARCHAR(191) NOT NULL,
-    `chat_id` VARCHAR(191) NOT NULL,
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `chat_id` INTEGER NOT NULL,
     `username` VARCHAR(191) NULL,
     `first_name` VARCHAR(191) NULL,
     `last_name` VARCHAR(191) NULL,
