@@ -3,11 +3,20 @@ import { TRoute } from "../types/rotues";
 
 import DashboardPage from "../features/dashboard/pages/DashbodrdPage";
 
-const ScanPage = lazy(() => import("../features/create-session/pages/ScanPage"));
+const ScanPage = lazy(
+  () => import("../features/create-session/pages/ScanPage"),
+);
 const LoginPage = lazy(() => import("../features/user/pages/LoginPage"));
 const RegisterPage = lazy(() => import("../features/user/pages/RegisterPage"));
-const NotFoundPage = lazy(() => import("../features/errors/pages/NotFoundPage"));
-const WhatsappPage = lazy(() => import("../features/whatsapp/page/WhatsappPage"));
+const NotFoundPage = lazy(
+  () => import("../features/errors/pages/NotFoundPage"),
+);
+const WhatsappPage = lazy(
+  () => import("../features/whatsapp/page/WhatsappPage"),
+);
+const TelegramPage = lazy(
+  () => import("../features/telegram/page/TelegramPage"),
+);
 
 export const routes: TRoute[] = [
   // START USER
@@ -35,6 +44,13 @@ export const routes: TRoute[] = [
       {
         path: "whatsapp",
         element: <WhatsappPage />,
+        needAuthentication: true,
+      },
+      //   END WHATSAPP
+      //   START TELEGRAM
+      {
+        path: "telegram",
+        element: <TelegramPage />,
         needAuthentication: true,
       },
       //   END WHATSAPP

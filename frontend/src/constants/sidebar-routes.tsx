@@ -1,5 +1,5 @@
 import { FiHome, FiUsers } from "react-icons/fi";
-import { FaWhatsapp } from "react-icons/fa";
+import { FaTelegramPlane, FaWhatsapp } from "react-icons/fa";
 
 export const ROUTES = [
   {
@@ -11,6 +11,11 @@ export const ROUTES = [
     label: "Scan",
     path: "/dashboard/scan",
     icon: <FiUsers className="w-5 h-5" />,
+  },
+  {
+    label: "Telegram",
+    path: "/dashboard/telegram",
+    icon: <FaTelegramPlane className="w-5 h-5" />,
   },
   {
     label: "Whatsaap",
