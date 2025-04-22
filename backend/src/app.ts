@@ -13,7 +13,7 @@ import { app, server } from "@/libs/socket";
 import { ConnectionSession } from "./libs/whatsapp";
 import Schedule from "@jobs/index";
 import path from "path";
-import TelegramBotClient from "./libs/telegram/telegram-client";
+import TelegramBotClient from "./libs/telegram/telegram-bot-client";
 
 class App {
   public app: express.Application;
@@ -150,6 +150,7 @@ class App {
 
   private initializeScheduler() {
     Schedule.run();
+    logger.info("Scheduler has been initialized");
   }
 }
 

@@ -4,6 +4,8 @@ import TelegramBot from "node-telegram-bot-api";
 import { BotConfig, MessageContext, CommandHandler } from "./types";
 import { Stream } from "stream";
 import { logger } from "@/utils/logger";
+import fs from "fs";
+import { UnionTypeWithString } from "@/utils/utils";
 
 export class TelegramBotService extends EventEmitter {
   private bot: TelegramBot;
@@ -158,16 +160,74 @@ export class TelegramBotService extends EventEmitter {
     chatId: number,
     photo: string | Buffer | Stream,
     options?: TelegramBot.SendPhotoOptions,
+    fileOptions?: TelegramBot.FileOptions,
   ): Promise<TelegramBot.Message> {
-    return this.bot.sendPhoto(chatId, photo, options);
+    return this.bot.sendPhoto(chatId, photo, options, fileOptions);
   }
 
   public sendDocument(
     chatId: number,
     document: string | Buffer | Stream,
     options?: TelegramBot.SendDocumentOptions,
+    fileOptions?: TelegramBot.FileOptions,
   ): Promise<TelegramBot.Message> {
-    return this.bot.sendDocument(chatId, document, options);
+    return this.bot.sendDocument(chatId, document, options, fileOptions);
+  }
+
+  public sendVideo(
+    chatId: number,
+    video: string | Buffer | Stream,
+    options?: TelegramBot.SendVideoOptions,
+    fileOptions?: TelegramBot.FileOptions,
+  ): Promise<TelegramBot.Message> {
+    return this.bot.sendVideo(chatId, video, options, fileOptions);
+  }
+
+  public sendMedia(
+    chatId: number,
+    path: string,
+    filename?: string,
+    mimeType?: string,
+    caption?: string,
+    category: UnionTypeWithString<"image" | "video" | "document"> = "document",
+  ): Promise<TelegramBot.Message> {
+    try {
+      let sent: Promise<TelegramBot.Message>;
+      const fileOptions: TelegramBot.FileOptions = {
+        filename,
+        contentType: mimeType,
+      };
+      switch (category) {
+        case "image":
+          sent = this.sendPhoto(
+            chatId,
+            fs.readFileSync(path),
+            { caption },
+            fileOptions,
+          );
+          break;
+        case "video":
+          sent = this.sendVideo(
+            chatId,
+            fs.readFileSync(path),
+            { caption },
+            fileOptions,
+          );
+          break;
+        default:
+          sent = this.sendDocument(
+            chatId,
+            fs.readFileSync(path),
+            { caption },
+            fileOptions,
+          );
+          break;
+      }
+
+      return sent;
+    } catch (error) {
+      throw new Error(error);
+    }
   }
 
   public async getBotInfo(): Promise<TelegramBot.User> {

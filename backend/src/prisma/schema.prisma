@@ -13,6 +13,7 @@ generator client {
 
 enum NotificationType {
   WHATSAPP
+  TELEGRAM
   EMAIL
   SMS
 }
