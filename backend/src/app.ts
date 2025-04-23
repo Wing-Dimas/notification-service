@@ -5,7 +5,14 @@ import helmet from "helmet";
 import morgan from "morgan";
 import swaggerJSDoc from "swagger-jsdoc";
 import swaggerUi from "swagger-ui-express";
-import { NODE_ENV, PORT, LOG_FORMAT, SESSION_NAME } from "@config";
+import {
+  NODE_ENV,
+  PORT,
+  LOG_FORMAT,
+  SESSION_NAME,
+  TELEGRAM_WEBHOOK_URL,
+  TELEGRAM_WEBHOOK_PORT,
+} from "@config";
 import { Routes } from "@interfaces/routes.interface";
 import errorMiddleware from "@middlewares/error.middleware";
 import { logger, stream } from "@utils/logger";
@@ -29,7 +36,7 @@ class App {
     this.initializeRoutes(routes);
     this.initializeSwagger();
     this.initializeErrorHandling();
-    // this.initializeWhatsapp();
+    this.initializeWhatsapp();
     this.initializeTelegramBot();
     this.initializeScheduler();
     this.initializeWebApp();
@@ -112,24 +119,26 @@ class App {
     // Initialize your Telegram bot here
     TelegramBotClient.init({
       token: process.env.TELEGRAM_BOT_TOKEN || "",
-      polling: NODE_ENV !== "production",
+      // polling: NODE_ENV !== "production",
+      polling: true,
       // Set up webhook if in production
       webhook:
-        NODE_ENV === "production"
+        // NODE_ENV === "production"
+        false
           ? {
-              url: process.env.WEBHOOK_URL || "",
-              port: Number(process.env.WEBHOOK_PORT) || 443,
+              url: TELEGRAM_WEBHOOK_URL || "",
+              port: Number(TELEGRAM_WEBHOOK_PORT) || 443,
               path: "/webhook",
             }
           : undefined,
     });
 
-    if (NODE_ENV === "production") {
-      // Use middleware for webhook
-      this.app.use(
-        TelegramBotClient.getInstance().getWebhookMiddleware("/webhook"),
-      );
-    }
+    // if (NODE_ENV === "production") {
+    //   // Use middleware for webhook
+    //   this.app.use(
+    //     TelegramBotClient.getInstance().getWebhookMiddleware("/webhook"),
+    //   );
+    // }
 
     TelegramBotClient.getBotInfo()
       .then(botInfo => {

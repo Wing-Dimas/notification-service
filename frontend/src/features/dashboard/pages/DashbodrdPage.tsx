@@ -37,6 +37,19 @@ const DashboardPage: React.FC = () => {
               <div className="stat-value">{statusWA ? "ON" : "OFF"}</div>
             </div>
           </div>
+          <div className="stats shadow">
+            <div className="stat">
+              <div className="stat-title">Link Telegram Bot</div>
+              <div className="stat-desc">
+                <a
+                  href={data?.telegram_bot_link}
+                  className="link link-hover text-xs text-blue-600 hover:underline mt-1"
+                >
+                  {data?.telegram_bot_link}
+                </a>
+              </div>
+            </div>
+          </div>
         </div>
         {/* CHART */}
 

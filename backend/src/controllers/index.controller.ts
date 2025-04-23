@@ -1,3 +1,4 @@
+import { TELEGRAM_BOT_LINK } from "@/config";
 import MessageService from "@/services/message.service";
 import { NextFunction, Request, Response } from "express";
 
@@ -29,7 +30,13 @@ class IndexController {
       res.status(200).json({
         message: "success",
         status: 200,
-        data: { total, messages, weaklyData, dailyStatusMessage },
+        data: {
+          total,
+          messages,
+          weaklyData,
+          dailyStatusMessage,
+          telegram_bot_link: TELEGRAM_BOT_LINK,
+        },
       });
     } catch (error) {
       next(error);

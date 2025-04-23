@@ -12,9 +12,9 @@ import { useForm } from "react-hook-form";
 import TextAreaInput from "../../../components/input/TextAreaInput";
 import InputFile from "../../../components/input/InputFile";
 import FilePreview from "../../../components/FilePreview";
-import useEditMessageWA from "../hooks/useEditMessageTelegram";
+import useEditMessageTelegram from "../hooks/useEditMessageTelegram";
 import toast from "react-hot-toast";
-import useGetMessageWA from "../hooks/useGetMessageTelegram";
+import useGetMessageTelegram from "../hooks/useGetMessageTelegram";
 
 interface EditMessageProps {
   message: IMessage;
@@ -22,8 +22,8 @@ interface EditMessageProps {
 }
 
 const EditMessage: React.FC<EditMessageProps> = ({ message, onClose }) => {
-  const { refetch } = useGetMessageWA();
-  const { loading, editMessageWA } = useEditMessageWA();
+  const { refetch } = useGetMessageTelegram();
+  const { loading, editMessageTelegram } = useEditMessageTelegram();
 
   let parsedPayload;
   const isJson = validateJson(message.payload);
@@ -57,7 +57,7 @@ const EditMessage: React.FC<EditMessageProps> = ({ message, onClose }) => {
     }
     onClose();
 
-    await toast.promise(editMessageWA(message.id, formData), {
+    await toast.promise(editMessageTelegram(message.id, formData), {
       loading: "Menyimpan...",
       success: () => {
         refetch();
@@ -104,7 +104,7 @@ const EditMessage: React.FC<EditMessageProps> = ({ message, onClose }) => {
           <TextAreaInput
             type="text"
             containerStyle="mt-4"
-            labelTitle="Nomor Penerima"
+            labelTitle="Penerima (chat id atau username)"
             {...register("receiver")}
           />
           {!!errors.receiver?.message && (
