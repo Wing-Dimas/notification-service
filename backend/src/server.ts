@@ -7,6 +7,7 @@ import MessageRoute from "@routes/message.route";
 import SessionRoute from "@routes/session.route";
 import WhatsappMessageRoute from "./routes/whatsapp.route";
 import TelegramRoute from "./routes/telegram.route";
+import ApiKeyRoute from "./routes/api-key.route";
 
 import validateEnv from "@utils/validateEnv";
 
@@ -20,6 +21,7 @@ const app = new App([
   new SessionRoute(),
   new WhatsappMessageRoute(),
   new TelegramRoute(),
+  new ApiKeyRoute(),
 ]);
 
 app.listen();

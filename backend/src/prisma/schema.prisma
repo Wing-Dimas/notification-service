@@ -25,6 +25,7 @@ model User {
   password   String
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
+  api_key    ApiKey[]
 
   @@map("users")
 }
@@ -88,4 +89,19 @@ model MessageAttachment {
   message Message @relation(fields: [message_id], references: [id], onDelete: Cascade)
 
   @@map("message_attachments")
+}
+
+model ApiKey {
+  id         Int       @id @default(autoincrement())
+  key        String    @unique
+  name       String    @unique
+  is_active  Boolean   @default(true)
+  user_id    Int
+  expires_at DateTime?
+  updated_at DateTime  @updatedAt
+  created_at DateTime  @default(now())
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("api_keys")
 }
