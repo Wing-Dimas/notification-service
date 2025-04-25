@@ -1,6 +1,11 @@
+import { SendMessageDto } from "@/dtos/message.dto";
 import { HttpException } from "@/exceptions/HttpException";
+import AMQPClient from "@/libs/amqp-client";
 import { db } from "@/libs/db";
+import { TelegramBotClient } from "@/libs/telegram";
+import { phoneNumber } from "@/utils/utils";
 import { Message } from "@prisma/client";
+import fs from "fs";
 
 class MessageService {
   public message = db.message;
@@ -127,6 +132,68 @@ class MessageService {
       return dailyResults;
     } catch (error) {
       throw new HttpException(500, `Internal Server Error: ${error.message}`);
+    }
+  }
+
+  public async sendMessage(
+    sendMessageData: SendMessageDto,
+    file?: Express.Multer.File,
+  ): Promise<void> {
+    const amqpClient = new AMQPClient();
+    const channel = await amqpClient.connect();
+
+    try {
+      const { notification_type: notificationType } = sendMessageData;
+
+      let receiver: any;
+
+      switch (notificationType) {
+        case "telegram":
+          receiver = await TelegramBotClient.getReceiver(
+            sendMessageData.receiver,
+          );
+          if (!receiver)
+            throw new HttpException(
+              400,
+              "Receiver not found, please connect receiver to bot first",
+            );
+          break;
+        case "whatsapp":
+          receiver = phoneNumber(sendMessageData.receiver);
+          if (!receiver) throw new HttpException(400, "Invalid receiver");
+          break;
+        default:
+          throw new HttpException(400, "Invalid notification type");
+      }
+
+      let data: any = {
+        ...sendMessageData,
+      };
+
+      if (file) {
+        const fileData = fs.readFileSync(file.path);
+        const fileDataBase64 = fileData.toString("base64");
+        data = {
+          ...data,
+          filename: file.filename,
+          data: fileDataBase64,
+        };
+      }
+
+      channel.publish(
+        "notification",
+        notificationType,
+        Buffer.from(JSON.stringify(data)),
+        {
+          persistent: !!file,
+        },
+      );
+
+      if (file) fs.unlinkSync(file.path);
+    } catch (error) {
+      throw new HttpException(error.status, error.message);
+    } finally {
+      await amqpClient.close();
     }
   }
 }

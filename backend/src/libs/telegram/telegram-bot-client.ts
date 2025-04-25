@@ -1,6 +1,8 @@
+import { telegramUser } from "@prisma/client";
 import commands from "./commands";
 import { TelegramBotService } from "./telegram-bot-service";
 import { logger } from "@/utils/logger";
+import { db } from "../db";
 
 export default class TelegramBotClient {
   private static botService: TelegramBotService | null = null;
@@ -73,5 +75,24 @@ export default class TelegramBotClient {
       );
     }
     return this.botService.getBotInfo();
+  }
+
+  public static isNumeric(str: any) {
+    return !isNaN(str) && !isNaN(parseFloat(str));
+  }
+
+  public static async getReceiver(receiver: string): Promise<telegramUser> {
+    const findUsers = await db.telegramUser.findMany({
+      where: {
+        OR: [
+          { username: receiver },
+          ...(this.isNumeric(receiver) ? [{ chat_id: Number(receiver) }] : []),
+        ],
+      },
+    });
+
+    const user = findUsers.length ? findUsers[0] : null;
+
+    return user;
   }
 }

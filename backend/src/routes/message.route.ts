@@ -3,10 +3,11 @@ import { SendMessageDto } from "@dtos/message.dto";
 import { Routes } from "@interfaces/routes.interface";
 import MessageController from "@/controllers/message.controller";
 import validationMiddleware from "@/middlewares/validation.middleware";
-import authMiddleware from "@/middlewares/auth.middleware";
+import multerMiddleware from "@/middlewares/multer.middleware";
+import validationApiKeyMiddleware from "@/middlewares/validation-api-key.middleware";
 
 class MessageRoute implements Routes {
-  public path = "/api";
+  public path = "/api/send-message";
   public router = Router();
   public messageController = new MessageController();
 
@@ -16,9 +17,10 @@ class MessageRoute implements Routes {
 
   private initializeRoutes() {
     this.router.post(
-      `${this.path}/send-message`,
+      this.path,
+      validationApiKeyMiddleware,
+      multerMiddleware("temp").single("file"),
       validationMiddleware(SendMessageDto, "body"),
-      authMiddleware,
       this.messageController.sendMessage,
     );
   }
