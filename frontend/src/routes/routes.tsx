@@ -17,6 +17,7 @@ const WhatsappPage = lazy(
 const TelegramPage = lazy(
   () => import("../features/telegram/page/TelegramPage"),
 );
+const ApiKeyPage = lazy(() => import("../features/api-key/page/ApiKeyPage"));
 
 export const routes: TRoute[] = [
   // START USER
@@ -53,7 +54,14 @@ export const routes: TRoute[] = [
         element: <TelegramPage />,
         needAuthentication: true,
       },
-      //   END WHATSAPP
+      //   END TELEGRAM
+      //   START API KEY MANAGEMENT
+      {
+        path: "api-key",
+        element: <ApiKeyPage />,
+        needAuthentication: true,
+      },
+      //   END API KEY MANAGEMENT
     ],
   },
   //   END DASHBOARD
