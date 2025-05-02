@@ -10,6 +10,7 @@ import {
 import { randomBytes } from "crypto";
 import { db } from "../db";
 import { logger } from "./logger";
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime";
 
 interface PrismaAuthState {
   state: AuthenticationState;
@@ -74,16 +75,15 @@ const BufferJSON = {
 };
 
 export const usePrismaAuthState = async (): Promise<PrismaAuthState> => {
+  const model = db.whatsaapAuthCredentials;
   // Fungsi untuk menulis data ke database
   const writeData = async (id: string, data: any): Promise<void> => {
     try {
-      await db.whatsaapAuthCredentials.upsert({
+      data = JSON.stringify(data, BufferJSON.replacer);
+      await model.upsert({
         where: { id: id },
-        update: { value: JSON.stringify(data, BufferJSON.replacer) },
-        create: {
-          id: id,
-          value: JSON.stringify(data, BufferJSON.replacer),
-        },
+        update: { value: data },
+        create: { id: id, value: data },
       });
     } catch (error) {
       logger.error(`Error writing data:`, error);
@@ -93,14 +93,22 @@ export const usePrismaAuthState = async (): Promise<PrismaAuthState> => {
   // Fungsi untuk membaca data dari database
   const readData = async (id: string): Promise<any> => {
     try {
-      const data = await db.whatsaapAuthCredentials.findUnique({
-        where: { id },
-      });
-      if (!data) return null;
-      const value = data.value;
-      return JSON.parse(value, BufferJSON.reviver);
+      const result = await model.findUnique({ where: { id } });
+      if (!result) {
+        logger.info({ id }, "Trying to read non existent session data");
+        return null;
+      }
+
+      return JSON.parse(result.value, BufferJSON.reviver);
     } catch (error) {
-      logger.error(`Error reading data:`, error);
+      if (
+        error instanceof PrismaClientKnownRequestError &&
+        error.code === "P2025"
+      ) {
+        logger.info({ id }, "Trying to read non existent session data");
+      } else {
+        logger.error(error, "An error occured during session read");
+      }
       return null;
     }
   };
@@ -108,9 +116,7 @@ export const usePrismaAuthState = async (): Promise<PrismaAuthState> => {
   // Fungsi untuk menghapus data dari database
   const removeData = async (id: string): Promise<void> => {
     try {
-      await db.whatsaapAuthCredentials.delete({
-        where: { id },
-      });
+      await db.whatsaapAuthCredentials.delete({ where: { id } });
     } catch (error) {
       logger.error(`Error removing data:`, error);
     }

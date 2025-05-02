@@ -14,11 +14,11 @@ class SessionRoute implements Routes {
 
   private initializeRoutes() {
     // CREATE SESSION
-    this.router.post(
-      `${this.path}/create-session`,
-      authMiddleware,
-      this.sessionController.createSession,
-    );
+    // this.router.post(
+    //   `${this.path}/create-session`,
+    //   authMiddleware,
+    //   this.sessionController.createSession,
+    // );
     // GET STATUS
     this.router.get(
       `${this.path}/get-status`,

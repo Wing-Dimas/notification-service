@@ -4,21 +4,21 @@ import SessionService from "@/services/session.service";
 class SessionController {
   public sessionService = new SessionService();
 
-  public createSession = async (
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ): Promise<void> => {
-    try {
-      await this.sessionService.createNewSession();
-      res.status(201).json({
-        message: "success",
-        status: 201,
-      });
-    } catch (error) {
-      next(error);
-    }
-  };
+  // public createSession = async (
+  //   req: Request,
+  //   res: Response,
+  //   next: NextFunction,
+  // ): Promise<void> => {
+  //   try {
+  //     await this.sessionService.createNewSession();
+  //     res.status(201).json({
+  //       message: "success",
+  //       status: 201,
+  //     });
+  //   } catch (error) {
+  //     next(error);
+  //   }
+  // };
 
   public getStatus = async (
     req: Request,

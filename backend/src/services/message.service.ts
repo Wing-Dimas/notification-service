@@ -3,7 +3,7 @@ import { HttpException } from "@/exceptions/HttpException";
 import AMQPClient from "@/libs/amqp-client";
 import { db } from "@/libs/db";
 import { TelegramBotClient } from "@/libs/telegram";
-import { phoneNumber } from "@/utils/utils";
+import { WhatsappClient } from "@/libs/whatsapp";
 import { Message } from "@prisma/client";
 import fs from "fs";
 
@@ -159,7 +159,13 @@ class MessageService {
             );
           break;
         case "whatsapp":
-          receiver = phoneNumber(sendMessageData.receiver);
+          const whastappClient = WhatsappClient.getInstance(); // get whatsapp whastappClient instance
+          if (!whastappClient)
+            throw new HttpException(
+              503,
+              "Whatsapp is not running, please try again later or choose another notification type",
+            );
+          receiver = whastappClient.formatPhoneNumber(sendMessageData.receiver);
           if (!receiver) throw new HttpException(400, "Invalid receiver");
           break;
         default:

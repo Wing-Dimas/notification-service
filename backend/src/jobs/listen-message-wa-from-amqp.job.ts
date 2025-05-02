@@ -2,14 +2,12 @@ import { NODE_ENV } from "@/config";
 import { Content } from "@/interfaces/amqp.interface";
 import AMQPClient from "@/libs/amqp-client";
 import { db } from "@/libs/db";
-import { ConnectionSession, Client } from "@/libs/whatsapp";
-import { SessionType } from "@/libs/whatsapp/connection-session";
+import { WhatsappClient, WhatsappService } from "@/libs/whatsapp";
 import { logger } from "@/utils/logger";
 import {
   getFileCategory,
   getMimeTypeFromName,
   isValidExt,
-  phoneNumber,
   sleep,
 } from "@/utils/utils";
 import { proto } from "@whiskeysockets/baileys";
@@ -21,18 +19,16 @@ export default class ListenMessageWAFromAMQP {
   private readonly channelName = "notification";
   private readonly queueName = "whatsapp";
   private readonly virtualHostName = "/";
-  private client: Client;
-  private session: SessionType;
+  private client: WhatsappService;
 
   constructor() {
-    this.session = new ConnectionSession().getClient();
-    this.client = new Client(this.session, this.session?.user?.id);
+    this.client = WhatsappClient.getInstance();
     this.handler();
   }
 
   public async handler() {
     // CEK SESSION UP
-    if (!this.session?.user?.id || this.session?.isStop) return;
+    if (!this.client?.isConnected) return;
 
     const amqpClient = new AMQPClient(this.virtualHostName);
 
@@ -62,7 +58,10 @@ export default class ListenMessageWAFromAMQP {
       const isValidContent = this.validateContent(msg);
 
       if (!isValidContent) {
-        await this.client.sendText("Terdapat pesan yang gagal dikirim");
+        await this.client.sendMessage(
+          this.client.getUser().id,
+          "Terdapat pesan yang gagal dikirim",
+        );
         return;
       }
 
@@ -71,9 +70,14 @@ export default class ListenMessageWAFromAMQP {
 
       const message = content.message ?? "";
 
-      const receiver = phoneNumber(content.receiver);
-
-      this.client.setTarget(receiver);
+      const receiver = this.client.formatPhoneNumber(content.receiver);
+      if (!receiver) {
+        await this.client.sendMessage(
+          this.client.getUser().id,
+          "Terdapat pesan yang gagal dikirim",
+        );
+        return;
+      }
 
       let sent: proto.IWebMessageInfo;
 
@@ -82,13 +86,13 @@ export default class ListenMessageWAFromAMQP {
       //  params msg
       if (!content.data) {
         // WITHOUT DOCUMENT
-        sent = await this.client.sendText(message);
+        sent = await this.client.sendMessage(receiver, message);
 
         // SAVE TO DB
         await db.message.update({
           where: { id: messageData.id },
           data: {
-            sender: this.session.user.id,
+            sender: this.client.getUser().id,
             receiver: receiver,
             payload: msg.content.toString(),
             sent_at: new Date(),
@@ -115,6 +119,7 @@ export default class ListenMessageWAFromAMQP {
 
         // SEND MESSAGE BASED ON MEDIA
         sent = await this.client.sendMedia(
+          receiver,
           filePath,
           content.filename,
           mimeType,
@@ -127,7 +132,7 @@ export default class ListenMessageWAFromAMQP {
           where: { id: messageData.id },
           data: {
             payload: JSON.stringify({ ...content, data: null }),
-            sender: this.session.user.id,
+            sender: this.client.getUser().id,
             receiver: receiver,
             status: true,
             sent_at: new Date(),

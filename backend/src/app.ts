@@ -5,6 +5,7 @@ import helmet from "helmet";
 import morgan from "morgan";
 import swaggerJSDoc from "swagger-jsdoc";
 import swaggerUi from "swagger-ui-express";
+import path from "path";
 import {
   NODE_ENV,
   PORT,
@@ -14,13 +15,12 @@ import {
   TELEGRAM_WEBHOOK_PORT,
 } from "@config";
 import { Routes } from "@interfaces/routes.interface";
+import Schedule from "@jobs/index";
 import errorMiddleware from "@middlewares/error.middleware";
 import { logger, stream } from "@utils/logger";
 import { app, server } from "@/libs/socket";
-import { ConnectionSession } from "./libs/whatsapp";
-import Schedule from "@jobs/index";
-import path from "path";
-import TelegramBotClient from "./libs/telegram/telegram-bot-client";
+import { TelegramBotClient } from "./libs/telegram";
+import { WhatsappClient } from "./libs/whatsapp";
 
 class App {
   public app: express.Application;
@@ -38,7 +38,7 @@ class App {
     this.initializeErrorHandling();
     this.initializeWhatsapp();
     this.initializeTelegramBot();
-    this.initializeScheduler();
+    // this.initializeScheduler();
     this.initializeWebApp();
   }
 
@@ -154,7 +154,14 @@ class App {
   }
 
   private async initializeWhatsapp() {
-    new ConnectionSession().createSession(SESSION_NAME);
+    // new ConnectionSession().createSession(SESSION_NAME);
+    WhatsappClient.init({ sessionName: SESSION_NAME })
+      .then(() => {
+        logger.info("WhatsappClient initialized successfully");
+      })
+      .catch(error => {
+        logger.error("Failed to initialize WhatsappClient:", error);
+      });
   }
 
   private initializeScheduler() {

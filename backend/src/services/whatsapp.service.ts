@@ -17,9 +17,9 @@ import path, { join } from "path";
 import fs from "fs";
 import { createPaginator, PaginatedResult } from "prisma-pagination";
 import { Content } from "@/interfaces/amqp.interface";
-import { Client, ConnectionSession } from "@/libs/whatsapp";
 import { Message, MessageAttachment, Prisma } from "@prisma/client";
 import { logger } from "@/utils/logger";
+import { WhatsappClient } from "@/libs/whatsapp";
 
 class WhatsappService {
   public message = db.message;
@@ -179,12 +179,13 @@ class WhatsappService {
     const payload = JSON.parse(findMessage.payload) as Content;
 
     try {
-      const receiver = phoneNumber(payload.receiver);
-      const client = new Client(new ConnectionSession().getClient(), receiver);
+      const client = WhatsappClient.getInstance(); // get whatsapp client instance
+      if (!client) throw new HttpException(503, "Whatsapp is not running");
+      const receiver = client.formatPhoneNumber(payload.receiver);
 
       // WITHOUT DOCUMENT
       if (!findMessage.message_attachments[0]) {
-        await client.sendText(payload.message);
+        await client.sendMessage(receiver, payload.message);
       } else {
         // WITH DOCUMENT
         const message = payload.message;
@@ -194,6 +195,7 @@ class WhatsappService {
         const fullpath = join(__dirname, "../../", file_path);
 
         await client.sendMedia(
+          receiver,
           fullpath,
           file_name,
           file_type,

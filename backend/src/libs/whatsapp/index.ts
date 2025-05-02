@@ -1,5 +1,4 @@
-import ConnectionSession from "./connection-session";
-import SessionDB from "./session-db";
-import Client from "./client";
+import WhatsappService from "./whatsaap-service";
+import WhatsappClient from "./whatsapp-client";
 
-export { ConnectionSession, SessionDB, Client };
+export { WhatsappService, WhatsappClient };

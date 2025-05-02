@@ -35,6 +35,7 @@ model Session {
   session_number     String
   status             String?
   send_first_message Boolean  @default(false)
+  is_stop            Boolean? @default(false)
   created_at         DateTime @default(now())
 
   @@map("sessions")
