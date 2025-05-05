@@ -13,6 +13,8 @@ import {
   SESSION_NAME,
   TELEGRAM_WEBHOOK_URL,
   TELEGRAM_WEBHOOK_PORT,
+  AMQP_URL,
+  AMQP_EXCHANGE,
 } from "@config";
 import { Routes } from "@interfaces/routes.interface";
 import Schedule from "@jobs/index";
@@ -21,6 +23,7 @@ import { logger, stream } from "@utils/logger";
 import { app, server } from "@/libs/socket";
 import { TelegramBotClient } from "./libs/telegram";
 import { WhatsappClient } from "./libs/whatsapp";
+import { RabbitMQClient } from "./libs/rabbitmq";
 
 class App {
   public app: express.Application;
@@ -38,7 +41,8 @@ class App {
     this.initializeErrorHandling();
     this.initializeWhatsapp();
     this.initializeTelegramBot();
-    // this.initializeScheduler();
+    this.initializeRabbitMQ();
+    this.initializeScheduler();
     this.initializeWebApp();
   }
 
@@ -133,6 +137,7 @@ class App {
           : undefined,
     });
 
+    // TODO : Fix this
     // if (NODE_ENV === "production") {
     //   // Use middleware for webhook
     //   this.app.use(
@@ -154,7 +159,6 @@ class App {
   }
 
   private async initializeWhatsapp() {
-    // new ConnectionSession().createSession(SESSION_NAME);
     WhatsappClient.init({ sessionName: SESSION_NAME })
       .then(() => {
         logger.info("WhatsappClient initialized successfully");
@@ -164,9 +168,21 @@ class App {
       });
   }
 
+  private async initializeRabbitMQ() {
+    RabbitMQClient.initialize(AMQP_URL, AMQP_EXCHANGE, 5000, 0)
+      .then(() => {
+        logger.info("RabbitMQ initialized successfully");
+      })
+      .catch(error => {
+        logger.error("Failed to initialize RabbitMQ:", error);
+      });
+  }
+
   private initializeScheduler() {
-    Schedule.run();
-    logger.info("Scheduler has been initialized");
+    setTimeout(() => {
+      Schedule.run();
+      logger.info("Scheduler has been initialized");
+    }, 5000);
   }
 }
 

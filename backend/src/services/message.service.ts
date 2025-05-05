@@ -1,9 +1,10 @@
 import { SendMessageDto } from "@/dtos/message.dto";
 import { HttpException } from "@/exceptions/HttpException";
-import AMQPClient from "@/libs/amqp-client";
 import { db } from "@/libs/db";
+import { RabbitMQClient } from "@/libs/rabbitmq";
 import { TelegramBotClient } from "@/libs/telegram";
 import { WhatsappClient } from "@/libs/whatsapp";
+import { isValidExt } from "@/utils/utils";
 import { Message } from "@prisma/client";
 import fs from "fs";
 
@@ -139,44 +140,28 @@ class MessageService {
     sendMessageData: SendMessageDto,
     file?: Express.Multer.File,
   ): Promise<void> {
-    const amqpClient = new AMQPClient();
-    const channel = await amqpClient.connect();
+    const broker = RabbitMQClient.getInstance();
+
+    if (!broker)
+      throw new HttpException(
+        503,
+        "RabbitMQ is not running, please try again later",
+      );
 
     try {
       const { notification_type: notificationType } = sendMessageData;
 
-      let receiver: any;
-
-      switch (notificationType) {
-        case "telegram":
-          receiver = await TelegramBotClient.getReceiver(
-            sendMessageData.receiver,
-          );
-          if (!receiver)
-            throw new HttpException(
-              400,
-              "Receiver not found, please connect receiver to bot first",
-            );
-          break;
-        case "whatsapp":
-          const whastappClient = WhatsappClient.getInstance(); // get whatsapp whastappClient instance
-          if (!whastappClient)
-            throw new HttpException(
-              503,
-              "Whatsapp is not running, please try again later or choose another notification type",
-            );
-          receiver = whastappClient.formatPhoneNumber(sendMessageData.receiver);
-          if (!receiver) throw new HttpException(400, "Invalid receiver");
-          break;
-        default:
-          throw new HttpException(400, "Invalid notification type");
-      }
+      await this.validateReceiver(sendMessageData);
 
       let data: any = {
         ...sendMessageData,
       };
 
       if (file) {
+        const isValidContent = isValidExt(file.filename);
+        if (!isValidContent)
+          throw new HttpException(400, "Invalid file extension");
+
         const fileData = fs.readFileSync(file.path);
         const fileDataBase64 = fileData.toString("base64");
         data = {
@@ -186,21 +171,46 @@ class MessageService {
         };
       }
 
-      channel.publish(
-        "notification",
-        notificationType,
-        Buffer.from(JSON.stringify(data)),
-        {
-          persistent: !!file,
-        },
-      );
+      await broker.publish(notificationType, data, { persistent: !!file });
 
       if (file) fs.unlinkSync(file.path);
     } catch (error) {
       throw new HttpException(error.status, error.message);
-    } finally {
-      await amqpClient.close();
     }
+  }
+
+  private async validateReceiver(sendMessageData: SendMessageDto) {
+    const { notification_type: notificationType } = sendMessageData;
+    let receiver: any;
+
+    switch (notificationType) {
+      case "telegram":
+        receiver = await TelegramBotClient.getReceiver(
+          sendMessageData.receiver,
+        );
+        if (!receiver)
+          throw new HttpException(
+            400,
+            "Receiver not found, please connect receiver to bot first",
+          );
+        break;
+
+      case "whatsapp":
+        const whastappClient = WhatsappClient.getInstance(); // get whatsapp whastappClient instance
+        if (!whastappClient)
+          throw new HttpException(
+            503,
+            "Whatsapp is not running, please try again later or choose another notification type",
+          );
+        receiver = whastappClient.formatPhoneNumber(sendMessageData.receiver);
+        if (!receiver) throw new HttpException(400, "Invalid receiver");
+        break;
+
+      default:
+        throw new HttpException(400, "Invalid notification type");
+    }
+
+    return receiver;
   }
 }
 

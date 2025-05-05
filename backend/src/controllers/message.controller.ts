@@ -14,11 +14,9 @@ class MessageController {
       const messageData = req.body as SendMessageDto;
       const file = req.file as Express.Multer.File;
 
-      console.log(file, messageData);
-
       await this.messageService.sendMessage(messageData, file);
 
-      res.status(200).json({ message: "success" });
+      res.status(200).json({ message: "success", status: 200 });
     } catch (error) {
       next(error);
     }

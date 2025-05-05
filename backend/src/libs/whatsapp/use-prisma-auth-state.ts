@@ -86,7 +86,7 @@ export const usePrismaAuthState = async (): Promise<PrismaAuthState> => {
         create: { id: id, value: data },
       });
     } catch (error) {
-      logger.error(`Error writing data:`, error);
+      logger.error(`Error writing data: ${error}`);
     }
   };
 
@@ -95,7 +95,7 @@ export const usePrismaAuthState = async (): Promise<PrismaAuthState> => {
     try {
       const result = await model.findUnique({ where: { id } });
       if (!result) {
-        logger.info({ id }, "Trying to read non existent session data");
+        logger.info(`${id} Trying to read non existent session data`);
         return null;
       }
 
@@ -105,9 +105,9 @@ export const usePrismaAuthState = async (): Promise<PrismaAuthState> => {
         error instanceof PrismaClientKnownRequestError &&
         error.code === "P2025"
       ) {
-        logger.info({ id }, "Trying to read non existent session data");
+        logger.info(`${id} Trying to read non existent session data`);
       } else {
-        logger.error(error, "An error occured during session read");
+        logger.error(`${error} An error occured during session read`);
       }
       return null;
     }

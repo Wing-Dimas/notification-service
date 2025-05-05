@@ -64,13 +64,7 @@ class WhatsappClient {
       // register commands
       this.whatsappBot.registerCommands(commands);
 
-      await this.whatsappBot.initialize().then(() => {
-        if (!this.whatsappBot.isConnected) {
-          this.whatsappBot = null;
-          logger.info("WhatsappClient is not connected.");
-          return;
-        }
-      });
+      await this.whatsappBot.initialize();
     } catch (error) {
       throw error;
     }
