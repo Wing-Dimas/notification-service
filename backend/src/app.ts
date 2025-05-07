@@ -17,13 +17,13 @@ import {
   AMQP_EXCHANGE,
 } from "@config";
 import { Routes } from "@interfaces/routes.interface";
-import Schedule from "@jobs/index";
 import errorMiddleware from "@middlewares/error.middleware";
 import { logger, stream } from "@utils/logger";
 import { app, server } from "@/libs/socket";
 import { TelegramBotClient } from "./libs/telegram";
 import { WhatsappClient } from "./libs/whatsapp";
 import { RabbitMQClient } from "./libs/rabbitmq";
+import JobManager from "./jobs/job-manager";
 
 class App {
   public app: express.Application;
@@ -179,9 +179,14 @@ class App {
   }
 
   private initializeScheduler() {
-    setTimeout(() => {
-      Schedule.run();
-      logger.info("Scheduler has been initialized");
+    setTimeout(async () => {
+      await JobManager.init()
+        .then(() => {
+          logger.info("Scheduler has been initialized");
+        })
+        .catch(error => {
+          logger.error("Failed to initialize Scheduler:" + error);
+        });
     }, 5000);
   }
 }

@@ -18,6 +18,11 @@ enum NotificationType {
   SMS
 }
 
+enum JobType {
+  SCHEDULE
+  MANUAL
+}
+
 model User {
   id         Int      @id @default(autoincrement())
   username   String   @unique
@@ -105,4 +110,16 @@ model ApiKey {
   user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@map("api_keys")
+}
+
+model Job {
+  id            Int       @id @default(autoincrement())
+  name          String    @unique
+  type          JobType
+  cron_schedule String?
+  is_active     Boolean   @default(true)
+  last_run_at   DateTime  @default(now())
+  next_run_at   DateTime?
+
+  @@map("jobs")
 }

@@ -1,8 +1,8 @@
-import { Content } from "@/interfaces/amqp.interface";
+import { logger } from "@/utils/logger";
+import ManualJob from "../manual-job";
 import { db } from "@/libs/db";
 import { RabbitMQClient } from "@/libs/rabbitmq";
-import { WhatsappClient, WhatsappService } from "@/libs/whatsapp";
-import { logger } from "@/utils/logger";
+import { Content } from "@/interfaces/amqp.interface";
 import {
   getFileCategory,
   getMimeTypeFromName,
@@ -11,25 +11,24 @@ import {
 } from "@/utils/utils";
 import fs from "fs";
 import { join } from "path";
+import { WhatsappClient } from "@/libs/whatsapp";
 
-export default class ListenMessageWAFromAMQP {
+export default class ListenMessageWAFromAMQPJob extends ManualJob {
   private readonly queueName = "whatsapp";
-  private client: WhatsappService;
 
   constructor() {
-    this.client = WhatsappClient.getInstance();
-    this.handler();
+    super("listen-message-wa-from-amqp");
   }
 
-  public async handler() {
-    const broker = RabbitMQClient.getInstance();
-    if (!broker) return;
+  public async execute(): Promise<void> {
+    try {
+      const client = WhatsappClient.getInstance();
+      const broker = RabbitMQClient.getInstance();
+      if (!broker) return;
 
-    const consumerTag = await broker.subscribe(
-      this.queueName,
-      async (msg: Content) => {
+      const handler = async (msg: Content) => {
         // CEK SESSION UP
-        if (!this.client?.isConnected)
+        if (!client?.isConnected)
           throw new Error("WhatsApp service not running");
 
         const messageData = await db.message.create({
@@ -48,10 +47,10 @@ export default class ListenMessageWAFromAMQP {
           return;
         }
 
-        const receiver = this.client.formatPhoneNumber(msg.receiver);
+        const receiver = client.formatPhoneNumber(msg.receiver);
         if (!receiver) {
-          await this.client.sendMessage(
-            this.client.getUser().id,
+          await client.sendMessage(
+            client.getUser().id,
             "Terdapat pesan yang gagal dikirim dengan nomor : " + msg.receiver,
           );
           return;
@@ -59,21 +58,22 @@ export default class ListenMessageWAFromAMQP {
         // delay random 1 - 20 seconds
         await sleep(Math.floor(Math.random() * (20000 - 1000 + 1)) + 1000);
         if (!msg.data) {
-          await this.client.sendMessage(receiver, msg.message);
+          await client.sendMessage(receiver, msg.message);
           await db.message.update({
             where: { id: messageData.id },
             data: {
-              sender: this.client.getUser().id,
+              sender: client.getUser().id,
               receiver: receiver,
               payload: JSON.stringify(msg),
               status: true,
+              sent_at: new Date(),
             },
           });
         } else {
           //   WITH DOCUEMNT
           const decodedFile = Buffer.from(msg.data, "base64");
           const mimeType = getMimeTypeFromName(msg.filename);
-          const folderName = join(__dirname, "../../uploads/wa");
+          const folderName = join(__dirname, "../../../uploads/wa");
           const newFilename = `${Date.now()}_${msg.filename}`;
           const filePath = join(folderName, newFilename);
           const extCategory = getFileCategory(mimeType);
@@ -88,7 +88,7 @@ export default class ListenMessageWAFromAMQP {
           fs.writeFileSync(filePath, decodedFile as Uint8Array);
 
           // SEND MESSAGE BASED ON MEDIA
-          await this.client.sendMedia(
+          await client.sendMedia(
             receiver,
             filePath,
             msg.filename,
@@ -102,7 +102,7 @@ export default class ListenMessageWAFromAMQP {
             where: { id: messageData.id },
             data: {
               payload: JSON.stringify({ ...msg, data: null }),
-              sender: this.client.getUser().id,
+              sender: client.getUser().id,
               receiver: receiver,
               status: true,
               sent_at: new Date(),
@@ -119,17 +119,26 @@ export default class ListenMessageWAFromAMQP {
 
           logger.info("whatsapp bot sent message to " + receiver);
         }
-      },
-      {
-        withDelay: true,
-        delayMS: 10 * 1000,
-      },
-    );
+      };
 
-    RabbitMQClient.registerConsumerTag(this.queueName, consumerTag);
+      const consumerTag = await broker.subscribe(this.queueName, handler, {
+        withDelay: true,
+        delayMS: 10 * 1000, // 10 seconds
+      });
+
+      RabbitMQClient.registerConsumerTag(this.queueName, consumerTag);
+    } catch (error) {
+      logger.error(error, {
+        job: this.jobName,
+        method: "execute",
+        file: "listen-message-wa-from-amqp.job.ts",
+      });
+    }
   }
 
-  public validateContent(content: any): boolean {
+  private validateContent(content: any): boolean {
+    // const content = JSON.parse(msg.content.toString()) as Content;
+
     return (
       "receiver" in content &&
       ("message" in content ||
@@ -137,5 +146,16 @@ export default class ListenMessageWAFromAMQP {
           "filename" in content &&
           isValidExt(content.filename)))
     );
+  }
+
+  public async onStop(): Promise<void> {
+    try {
+      const broker = RabbitMQClient.getInstance();
+      if (!broker) return;
+      const consumerTag = RabbitMQClient.getConsumerTags(this.queueName);
+      await broker.unsubscribe(consumerTag);
+    } catch (error) {
+      throw error;
+    }
   }
 }

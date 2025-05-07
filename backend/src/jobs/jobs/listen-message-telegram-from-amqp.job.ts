@@ -1,38 +1,35 @@
-import { Content } from "@/interfaces/amqp.interface";
+import ManualJob from "../manual-job";
+import { logger } from "@/utils/logger";
 import { db } from "@/libs/db";
 import { RabbitMQClient } from "@/libs/rabbitmq";
-import { TelegramBotService, TelegramBotClient } from "@/libs/telegram";
-import { logger } from "@/utils/logger";
+import { TelegramBotClient } from "@/libs/telegram";
+import { Content } from "@/interfaces/amqp.interface";
+import TelegramBot from "node-telegram-bot-api";
 import {
   getFileCategory,
   getMimeTypeFromName,
   isValidExt,
 } from "@/utils/utils";
-import { telegramUser } from "@prisma/client";
 import fs from "fs";
-import TelegramBot from "node-telegram-bot-api";
 import { join } from "path";
-export default class ListenMessageTelegramFromAMQP {
-  private readonly queueName = "telegram";
-  private client: TelegramBotService;
+import { telegramUser } from "@prisma/client";
 
+export default class ListenMessageTelegramFromAMQPJob extends ManualJob {
+  private readonly queueName = "telegram";
   constructor() {
-    this.client = TelegramBotClient.getInstance();
-    this.handler();
+    super("listen-message-telegram-from-amqp");
   }
 
-  public async handler() {
-    // CEK SESSION UP
-    if (!this.client) return;
+  public async execute(): Promise<void> {
+    try {
+      const client = TelegramBotClient.getInstance();
 
-    const broker = RabbitMQClient.getInstance();
-    if (!broker) return;
+      const broker = RabbitMQClient.getInstance();
+      if (!broker) return;
 
-    const sender = (await TelegramBotClient.getBotInfo()).username;
+      const sender = (await TelegramBotClient.getBotInfo()).username;
 
-    const consumerTag = await broker.subscribe(
-      this.queueName,
-      async (msg: Content) => {
+      const handler = async (msg: Content) => {
         const messageData = await db.message.create({
           data: {
             payload: JSON.stringify(msg),
@@ -50,12 +47,15 @@ export default class ListenMessageTelegramFromAMQP {
 
         const message = msg.message ?? "";
         const receiver = await this.getReceiver(msg.receiver);
-        if (!receiver) return;
+        if (!receiver) {
+          logger.warn(`receiver ${msg.receiver} not found`);
+          return;
+        }
 
         let sent: TelegramBot.Message;
 
         if (!msg.data) {
-          sent = await this.client.sendMessage(receiver.chat_id, message);
+          sent = await client.sendMessage(receiver.chat_id, message);
 
           await db.message.update({
             where: { id: messageData.id },
@@ -69,7 +69,7 @@ export default class ListenMessageTelegramFromAMQP {
         } else {
           const decodedFile = Buffer.from(msg.data, "base64");
           const mimeType = getMimeTypeFromName(msg.filename);
-          const folderName = join(__dirname, "../../uploads/telegram");
+          const folderName = join(__dirname, "../../../uploads/telegram");
           const newFilename = `${Date.now()}_${msg.filename}`;
           const filePath = join(folderName, newFilename);
           const extCategory = getFileCategory(mimeType);
@@ -81,7 +81,7 @@ export default class ListenMessageTelegramFromAMQP {
 
           fs.writeFileSync(filePath, decodedFile as Uint8Array);
 
-          sent = await this.client.sendMedia(
+          sent = await client.sendMedia(
             receiver.chat_id,
             filePath,
             msg.filename,
@@ -111,15 +111,21 @@ export default class ListenMessageTelegramFromAMQP {
         }
 
         logger.info("telegram message sent to " + sent.chat.username);
-      },
-    );
+      };
 
-    RabbitMQClient.registerConsumerTag(this.queueName, consumerTag);
+      const consumerTag = await broker.subscribe(this.queueName, handler);
+
+      RabbitMQClient.registerConsumerTag(this.queueName, consumerTag);
+    } catch (error) {
+      logger.error(error, {
+        job: this.jobName,
+        method: "execute",
+        file: "listen-message-telegram-from-amqp.job.ts",
+      });
+    }
   }
 
-  public validateContent(content: any): boolean {
-    // const content = JSON.parse(msg.content.toString()) as Content;
-
+  private validateContent(content: any): boolean {
     return (
       "receiver" in content &&
       ("message" in content ||
@@ -130,11 +136,11 @@ export default class ListenMessageTelegramFromAMQP {
   }
 
   // Fungsi untuk mengecek apakah string dapat dikonversi ke number
-  public isNumeric(str: any) {
+  private isNumeric(str: any) {
     return !isNaN(str) && !isNaN(parseFloat(str));
   }
 
-  public async getReceiver(receiver: string): Promise<telegramUser> {
+  private async getReceiver(receiver: string): Promise<telegramUser> {
     const findUsers = await db.telegramUser.findMany({
       where: {
         OR: [
@@ -147,5 +153,16 @@ export default class ListenMessageTelegramFromAMQP {
     const user = findUsers.length ? findUsers[0] : null;
 
     return user;
+  }
+
+  public async onStop(): Promise<void> {
+    try {
+      const broker = RabbitMQClient.getInstance();
+      if (!broker) return;
+      const consumerTag = RabbitMQClient.getConsumerTags(this.queueName);
+      await broker.unsubscribe(consumerTag);
+    } catch (error) {
+      throw error;
+    }
   }
 }
