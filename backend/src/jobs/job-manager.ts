@@ -145,6 +145,16 @@ class JobManager {
   public static isExist(name: string): boolean {
     return this.jobs.some(job => job.getJobName() === name);
   }
+
+  /**
+   * Retrieves a job by its name from the JobManager.
+   *
+   * @param name - The name of the job to retrieve.
+   * @returns The job instance if found, otherwise undefined.
+   */
+  public static getJob(name: string): BaseJob | undefined {
+    return this.jobs.find(job => job.getJobName() === name);
+  }
 }
 
 export default JobManager;

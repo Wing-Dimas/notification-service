@@ -1,5 +1,7 @@
 import { SendMessageDto } from "@/dtos/message.dto";
 import { HttpException } from "@/exceptions/HttpException";
+import BaseJob from "@/jobs/base-job";
+import JobManager from "@/jobs/job-manager";
 import { db } from "@/libs/db";
 import { RabbitMQClient } from "@/libs/rabbitmq";
 import { TelegramBotClient } from "@/libs/telegram";
@@ -182,9 +184,16 @@ class MessageService {
   private async validateReceiver(sendMessageData: SendMessageDto) {
     const { notification_type: notificationType } = sendMessageData;
     let receiver: any;
+    let job: BaseJob;
 
     switch (notificationType) {
       case "telegram":
+        job = JobManager.getJob("listen-message-telegram-from-amqp");
+        if (!job.isActive)
+          throw new HttpException(
+            503,
+            "Telegram is not running, please try again later or choose another notification type",
+          );
         receiver = await TelegramBotClient.getReceiver(
           sendMessageData.receiver,
         );
@@ -196,8 +205,9 @@ class MessageService {
         break;
 
       case "whatsapp":
+        job = JobManager.getJob("listen-message-wa-from-amqp");
         const whastappClient = WhatsappClient.getInstance(); // get whatsapp whastappClient instance
-        if (!whastappClient)
+        if (!whastappClient || !job.isActive)
           throw new HttpException(
             503,
             "Whatsapp is not running, please try again later or choose another notification type",
