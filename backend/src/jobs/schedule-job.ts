@@ -30,9 +30,13 @@ export default class ScheduledJob extends BaseJob {
    * Logs a success message if the execution succeeds, otherwise logs an error message.
    */
   public async start(): Promise<void> {
+    if (this.isActive) return;
     if (this.cronTask) this.stop();
 
-    this.updateJobData({ cron_schedule: this.cronSchedule, is_active: true });
+    await this.updateJobData({
+      cron_schedule: this.cronSchedule,
+      is_active: true,
+    });
 
     this.cronTask = cron.schedule(this.cronSchedule, async () => {
       try {
@@ -64,6 +68,7 @@ export default class ScheduledJob extends BaseJob {
    * Logs a success message if the execution succeeds, otherwise logs an error message.
    */
   public async stop(): Promise<void> {
+    if (!this.isActive) return;
     try {
       await this.updateJobData({ is_active: false, next_run_at: null });
       logger.info(`[ScheduledJob] ${this.jobName} stopped`);

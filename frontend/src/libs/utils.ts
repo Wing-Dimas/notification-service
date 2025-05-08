@@ -122,3 +122,103 @@ export const getFileCategory = (fileType: string): string => {
   if (ACCEPTED_DOCUMENT_TYPES.includes(fileType)) return "Dokumen";
   return "Tidak dikenal";
 };
+
+export const diffForHumans = (
+  date: Date | string,
+  compareDate = null,
+  withSuffix = true,
+  locale = "id",
+) => {
+  // Konversi input ke objek Date
+  const dateObj = date instanceof Date ? date : new Date(date);
+  const compareDateObj: Date = compareDate
+    ? (compareDate as unknown) instanceof Date
+      ? compareDate
+      : new Date(compareDate)
+    : new Date();
+
+  // Hitung perbedaan dalam milidetik
+  const diffMs = dateObj.getTime() - compareDateObj.getTime();
+  const absDiffMs = Math.abs(diffMs);
+
+  // Tentukan apakah masa lalu atau masa depan
+  const isPast = diffMs < 0;
+
+  // Konstanta untuk konversi waktu
+  const msPerSecond = 1000;
+  const msPerMinute = msPerSecond * 60;
+  const msPerHour = msPerMinute * 60;
+  const msPerDay = msPerHour * 24;
+  const msPerWeek = msPerDay * 7;
+  const msPerMonth = msPerDay * 30; // Perkiraan
+  const msPerYear = msPerDay * 365; // Perkiraan
+
+  // Unit waktu dan ambang batas mereka
+  const timeUnits = [
+    { unit: "year", ms: msPerYear, threshold: 1.5 * msPerYear },
+    { unit: "month", ms: msPerMonth, threshold: 1.5 * msPerMonth },
+    { unit: "week", ms: msPerWeek, threshold: 1.5 * msPerWeek },
+    { unit: "day", ms: msPerDay, threshold: 1.5 * msPerDay },
+    { unit: "hour", ms: msPerHour, threshold: 1.5 * msPerHour },
+    { unit: "minute", ms: msPerMinute, threshold: 1.5 * msPerMinute },
+    { unit: "second", ms: msPerSecond, threshold: 1000 },
+  ];
+
+  // Terjemahan untuk berbagai bahasa
+  const translations = {
+    en: {
+      year: ["year", "years"],
+      month: ["month", "months"],
+      week: ["week", "weeks"],
+      day: ["day", "days"],
+      hour: ["hour", "hours"],
+      minute: ["minute", "minutes"],
+      second: ["second", "seconds"],
+      past: "ago",
+      future: "in",
+      just: "just now",
+    },
+    id: {
+      year: ["tahun", "tahun"],
+      month: ["bulan", "bulan"],
+      week: ["minggu", "minggu"],
+      day: ["hari", "hari"],
+      hour: ["jam", "jam"],
+      minute: ["menit", "menit"],
+      second: ["detik", "detik"],
+      past: "yang lalu",
+      future: "dalam",
+      just: "baru saja",
+    },
+  };
+
+  // Gunakan bahasa Inggris sebagai fallback jika locale tidak ditemukan
+  const trans = translations[locale as "id" | "en"] || translations["en"];
+
+  // Tangani kasus khusus: tepat sama atau hampir sama
+  if (absDiffMs < 1000) {
+    return trans.just;
+  }
+
+  // Tentukan unit waktu yang sesuai
+  for (const unitInfo of timeUnits) {
+    if (absDiffMs >= unitInfo.threshold || unitInfo.unit === "second") {
+      const value = Math.round(absDiffMs / unitInfo.ms);
+      const unitName: string =
+        trans[unitInfo.unit as keyof typeof trans][value === 1 ? 0 : 1];
+
+      if (withSuffix) {
+        if (isPast) {
+          return `${value} ${unitName} ${trans.past}`;
+        } else {
+          return `${trans.future} ${value} ${unitName}`;
+        }
+      } else {
+        return `${value} ${unitName}`;
+      }
+    }
+  }
+
+  // Fallback (seharusnya tidak pernah terjadi)
+  return "";
+};

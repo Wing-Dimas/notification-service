@@ -1,5 +1,5 @@
 import { FiHome, FiUsers } from "react-icons/fi";
-import { FaKey, FaTelegramPlane, FaWhatsapp } from "react-icons/fa";
+import { FaKey, FaTelegramPlane, FaWhatsapp, FaWhmcs } from "react-icons/fa";
 
 export const ROUTES = [
   {
@@ -26,5 +26,10 @@ export const ROUTES = [
     label: "Api Key Management",
     path: "/dashboard/api-key",
     icon: <FaKey className="w-5 h-5" />,
+  },
+  {
+    label: "Job Management",
+    path: "/dashboard/job-management",
+    icon: <FaWhmcs className="w-5 h-5" />,
   },
 ];

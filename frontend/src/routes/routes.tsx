@@ -18,6 +18,7 @@ const TelegramPage = lazy(
   () => import("../features/telegram/page/TelegramPage"),
 );
 const ApiKeyPage = lazy(() => import("../features/api-key/page/ApiKeyPage"));
+const JobPage = lazy(() => import("../features/job/page/JobPage"));
 
 export const routes: TRoute[] = [
   // START USER
@@ -62,6 +63,13 @@ export const routes: TRoute[] = [
         needAuthentication: true,
       },
       //   END API KEY MANAGEMENT
+      //   START Job MANAGEMENT
+      {
+        path: "job-management",
+        element: <JobPage />,
+        needAuthentication: true,
+      },
+      //   END Job MANAGEMENT
     ],
   },
   //   END DASHBOARD

@@ -18,10 +18,12 @@ export default class ManualJob extends BaseJob {
    * Logs a success message if the execution succeeds, otherwise logs an error message.
    */
   public async start() {
+    if (this.isActive) return;
     try {
       await this.updateJobData({ is_active: true, last_run_at: new Date() });
       await this.execute();
       await this.logExecution("success");
+      this.isActive = true;
     } catch (error) {
       await this.logExecution("failed", error.message);
       throw error;
@@ -37,6 +39,8 @@ export default class ManualJob extends BaseJob {
    * This method is called when a job is stopped.
    */
   public async stop(): Promise<void> {
+    if (!this.isActive) return;
+    this.isActive = false;
     try {
       await this.updateJobData({ is_active: false });
       await this.onStop();

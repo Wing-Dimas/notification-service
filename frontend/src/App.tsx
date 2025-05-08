@@ -18,7 +18,7 @@ function App() {
 
   return (
     <>
-      <RoutesGenerator routes={routes} />;
+      <RoutesGenerator routes={routes} />
       <Toaster position="bottom-right" />
     </>
   );

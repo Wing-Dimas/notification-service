@@ -58,7 +58,10 @@ class JobManager {
   private static async startJobs() {
     this.jobs.forEach(async job => {
       const jobData = await job.getJob();
-      if (jobData.is_active) job.start();
+      if (jobData.is_active) {
+        job.start();
+        job.isActive = true;
+      }
     });
   }
 
@@ -132,6 +135,15 @@ class JobManager {
       logger.error(error);
       return false;
     }
+  }
+
+  /**
+   * Checks if a job with the given name exists.
+   * @param name - The name of the job to check.
+   * @returns A boolean indicating whether the job exists.
+   */
+  public static isExist(name: string): boolean {
+    return this.jobs.some(job => job.getJobName() === name);
   }
 }
 

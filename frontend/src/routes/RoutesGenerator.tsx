@@ -31,7 +31,14 @@ const NestedRoutes = (routes: TRoute[], parentPath = "") => {
           );
         }
 
-        return <Route index={indx === 0} key={randomKey()} path={path} element={<RouteElement {...route} />} />;
+        return (
+          <Route
+            index={indx === 0}
+            key={randomKey()}
+            path={path}
+            element={<RouteElement {...route} />}
+          />
+        );
       })}
     </>
   );
@@ -43,7 +50,10 @@ const RouteElement = (route: TRoute) => {
   return (
     <>
       {needAuthentication ? (
-        <ProtectedRoute needAuthentication={needAuthentication} component={Component} />
+        <ProtectedRoute
+          needAuthentication={needAuthentication}
+          component={Component}
+        />
       ) : (
         Component
       )}

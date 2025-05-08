@@ -9,6 +9,8 @@ export default class BaseJob {
   protected jobName: string;
   protected type: JobType["type"];
 
+  public isActive = false;
+
   /**
    * Constructs a new instance of the BaseJob class.
    *
