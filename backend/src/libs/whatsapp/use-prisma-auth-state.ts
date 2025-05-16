@@ -10,7 +10,7 @@ import {
 import { randomBytes } from "crypto";
 import { db } from "../db";
 import { logger } from "./logger";
-import { PrismaClientKnownRequestError } from "@prisma/client/runtime";
+import { PrismaClientKnownRequestError } from "@/generated/prisma/internal/prismaNamespace";
 
 interface PrismaAuthState {
   state: AuthenticationState;
@@ -41,7 +41,6 @@ const initAuthCreds = (): AuthenticationCreds => {
 };
 
 const BufferJSON = {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   replacer: (k, value: any) => {
     if (
       Buffer.isBuffer(value) ||
@@ -57,7 +56,6 @@ const BufferJSON = {
     return value;
   },
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   reviver: (_, value: any) => {
     if (
       typeof value === "object" &&

@@ -9,6 +9,6 @@ export const color = (text: string, color: string) => {
   return !color
     ? chalk.green(text)
     : color.startsWith("#")
-    ? chalk.hex(color)(text)
-    : chalk.keyword(color)(text);
+      ? chalk.hex(color)(text)
+      : chalk.keyword(color)(text);
 };

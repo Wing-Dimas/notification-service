@@ -19,7 +19,7 @@ class ApiKeyRoute implements Routes {
     this.router.get(`${this.path}`, this.apiKeyController.findAllApiKeys);
     // GET API KEY BY ID
     this.router.get(
-      `${this.path}/:id(\\d+)`,
+      `${this.path}/:id`,
       authMiddleware,
       this.apiKeyController.findApiKeyById,
     );
@@ -32,14 +32,14 @@ class ApiKeyRoute implements Routes {
     );
     // UPDATE API KEY
     this.router.put(
-      `${this.path}/:id(\\d+)`,
+      `${this.path}/:id`,
       authMiddleware,
       validationMiddleware(UpdateApiKeyDto, "body", true),
       this.apiKeyController.updateApiKey,
     );
     // DELETE API KEY
     this.router.delete(
-      `${this.path}/:id(\\d+)`,
+      `${this.path}/:id`,
       authMiddleware,
       this.apiKeyController.deleteApiKey,
     );

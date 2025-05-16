@@ -42,4 +42,5 @@ RUN apk add curl
 RUN npm ci --only=production && npm cache clean --force
 RUN npx prisma generate
 
-CMD [ "node", "dist/server.js" ]
+# CMD [ "node", "dist/server.js" ]
+CMD [ "npm", "run", "start:migrate:prod" ]

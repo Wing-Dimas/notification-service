@@ -26,6 +26,7 @@
       "@controllers/*": ["controllers/*"],
       "@dtos/*": ["dtos/*"],
       "@exceptions/*": ["exceptions/*"],
+      "@generated/*": ["generated/*"],
       "@interfaces/*": ["interfaces/*"],
       "@middlewares/*": ["middlewares/*"],
       "@routes/*": ["routes/*"],
@@ -36,5 +37,11 @@
     }
   },
   "include": ["src/**/*.ts", "src/**/*.json", ".env"],
-  "exclude": ["node_modules", "src/http", "src/logs", "src/tests"]
+  "exclude": [
+    "node_modules",
+    "src/http",
+    "src/logs",
+    "src/tests",
+    "src/generated"
+  ]
 }

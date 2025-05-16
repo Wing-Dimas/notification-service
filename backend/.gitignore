@@ -137,3 +137,6 @@ session/store/*.json
 
 # upluoder
 uploads
+
+# generator
+/src/generated

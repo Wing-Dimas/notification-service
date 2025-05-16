@@ -25,6 +25,7 @@
       "@controllers/*": ["controllers/*"],
       "@dtos/*": ["dtos/*"],
       "@exceptions/*": ["exceptions/*"],
+      "@generated/*": ["generated/*"],
       "@interfaces/*": ["interfaces/*"],
       "@middlewares/*": ["middlewares/*"],
       "@routes/*": ["routes/*"],

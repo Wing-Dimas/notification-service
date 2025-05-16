@@ -7,7 +7,11 @@ datasource db {
 }
 
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+
+  // Optional v6.7
+  moduleFormat = "cjs"
   // binaryTargets = ["native", "darwin-arm64", "linux-musl-arm64-openssl-3.0.x"]
 }
 
